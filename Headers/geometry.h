@@ -30,7 +30,7 @@ public:
        : origin(p), 
          direction(d.normalized()) 
     {}
-    Ray(): Ray(QVector3D(0,0,0), QVector3D(0,0,0)) {}
+    Ray(): Ray(QVector3D(0,0,0), QVector3D(0,0,1)) {}
 
     const QVector3D getOrigin() const {return origin;}
     const QVector3D getDirection() const {return direction;}
@@ -62,29 +62,27 @@ public:
     const double getRadius() const {return radius;}
     const double getHeight() const {return height;}
 
-    bool contain(const QVector3D& point) const 
-    {
-        if(point.z() <= baseCenter.z() || 
-           point.z() >= baseCenter.z() + height)
-           return false;
+    bool contain(const QVector3D& point) const override;
 
-        if(qPow(point.x()-baseCenter.x(), 2) + qPow(point.y()-baseCenter.y(), 2) >= qPow(radius, 2))
-            return false;
+    double intersection(const Ray& ray) const override;
+};
 
-        return true;
-    }
 
-    double intersection(const Ray& ray) const
-    {
-        // in this case the origin must reside in the cylinder
-        // projectthe setup onto the xy plane
-        QVector2D diffXY = baseCenter.toVector2D() - ray.getOrigin().toVector2D();
-        QVector2D dirXY = ray.getDirection().toVector2D();
-        double dirXYLen = dirXY.length();
-        dirXY = dirXY / dirXYLen;
-        double cosine = QVector2D::dotProduct(diffXY, dirXY);
-        return 1 / dirXYLen * (cosine + qSqrt(radius * radius + cosine * cosine - diffXY.lengthSquared()));
-    }
+class Sphere : public Shape
+{
+private:
+    const QVector3D center;
+    const double radius;
+public:
+    Sphere(const QVector3D& c, const double r) 
+        : center(c), radius(r) {}
+    // ~Sphere();
+
+    const QVector3D getCenter() const {return center;}
+    const double getRadius() const {return radius;}
+    
+    bool contain(const QVector3D& point) const override;
+    double intersection(const Ray& ray) const override;
 };
 
 #endif // GEOMETRY_H

@@ -5,4 +5,12 @@ add_test(
     NAME vector3Dtest
     COMMAND vector3Dtest
 )
+
+add_executable(geometryTest geometryTest.cpp)
+target_link_libraries(geometryTest PUBLIC geometry gtest_main)
+
+add_test(
+    NAME geometryTest
+    COMMAND geometryTest
+)
     

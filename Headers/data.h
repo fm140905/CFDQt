@@ -29,78 +29,24 @@ public:
     }
 
     // getters
-    int getNBins() const
-    {
-        return nbins;
-    }
-    double getBinContent(const int& binIndex) const
-    {
-        return binCounts[binIndex];
-    }
-    double getBinCenter(const int& binIndex) const
-    {
-        return binCenters[binIndex];
-    }
-    std::vector<double> getBinCenters() const
-    {
-        return binCenters;
-    }
-    std::vector<double> getBinContents() const
-    {
-        return binCounts;
-    }
-    int getTotalCounts() const
-    {
-        return totalCounts;
-    }
+    int getNBins() const;
+    double getBinContent(const int& binIndex) const;
+    double getBinCenter(const int& binIndex) const;
+    std::vector<double> getBinCenters() const;
+    std::vector<double> getBinContents() const;
+    int getTotalCounts() const;
 
     // setters
-    void setBinContents(const std::vector<double> counts)
-    {
-        if (counts.size() == binCenters.size())
-        {
-            binCounts = counts;
-        }
-    }
+    void setBinContents(const std::vector<double> counts);
     
     // fill new data
-    bool fill(const double item, const double weight=1)
-    {
-        if (item >= upperEdge || item < lowerEdge)
-        {
-            return false;
-        }
-        int binIndex = (item - lowerEdge) / binwidth;
-//        if(binIndex < 0 || binIndex >= nbins)
-//            return false;
-        binCounts[binIndex] += weight;
-        totalCounts += weight;
-        return true;
-    }
+    bool fill(const double item, const double weight=1);
 
     // clear
-    void clear()
-    {
-        totalCounts = 0;
-        std::fill(binCounts.begin(), binCounts.end(), 0);
-    }
+    void clear();
 
     // rebin
-    void rebin(const int nbins_, const double lower_, const double upper_)
-    {
-        totalCounts=0;
-        nbins = nbins_;
-        lowerEdge = lower_;
-        upperEdge = upper_;
-        binCounts = std::vector<double>(nbins, 0);
-        binCenters = std::vector<double>(nbins, 0);
-        binwidth = (upperEdge-lowerEdge) / nbins;
-        binCenters[0] = lowerEdge + 0.5 * binwidth;
-        for (int i=1;i<nbins;i++)
-        {
-            binCenters[i] = binCenters[i-1]+binwidth;
-        }
-    }
+    void rebin(const int nbins_, const double lower_, const double upper_);
 
 private:
     int nbins;

@@ -13,28 +13,6 @@
 #include "data.h"
 #include "tracking.h"
 
-class Sphere : public Shape
-{
-private:
-    const QVector3D center;
-    const double radius;
-public:
-    Sphere(const QVector3D& c, const double r) 
-        : center(c), radius(r) {}
-    // ~Sphere();
-    bool contain(const QVector3D& point) const
-    {
-        return (point-center).length() < radius;
-    }
-    double intersection(const Ray& ray) const
-    {
-        double d = center.distanceToLine(ray.getOrigin(), ray.getDirection());
-        if(d >= radius)
-            return 0;
-        return 2 * qSqrt(radius*radius - d * d);
-    }
-};
-
 /**
  * @brief F2 tally. spherical shape
  * 

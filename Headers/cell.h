@@ -1,6 +1,6 @@
 /**
  * @file cell.h
- * @brief cells and source
+ * @brief cells and source, MC run setup
  * @version 0.1
  * @date 2021-07-26
  * 
@@ -36,9 +36,9 @@ public:
 class Cell
 {
 private:
-    const Material& material;
+    const Material material;
     const double density;
-    const Cylinder& cylinder;
+    const Cylinder cylinder;
 public:
     Cell(const Material& mat, const double d, const Cylinder& cyl)
         : material(mat),
@@ -52,39 +52,31 @@ public:
 class Source
 {
 private:
-    const Cylinder& cylinder;
-    const Histogram& energyCDF;
+    const Cylinder cylinder;
+    const Histogram energyCDF;
 public:
     Source(const Cylinder& cyl, const Histogram& ergCDF)
         : cylinder(cyl), energyCDF(ergCDF) {}
     // ~Source();
 
-    Particle createParticle() const
-    {
-        // uniform, [0. 1)
-        double initZ = QRandomGenerator::global()->generateDouble() * cylinder.getHeight();
-        double initX, initY;
-        do
-        {
-            initX = cylinder.getRadius() * QRandomGenerator::global()->generateDouble();
-            initY = cylinder.getRadius() * QRandomGenerator::global()->generateDouble();
-        } while (initX * initX + initY * initY >= qPow(cylinder.getRadius(), 2));
-        QVector3D initPos = QVector3D(initX, initY, initZ) + cylinder.getBaseCenter();
-
-        double phi= 2 * M_PI * QRandomGenerator::global()->generateDouble();
-        double theta = qAcos(1 - 2 * QRandomGenerator::global()->generateDouble());
-        QVector3D initDir = QVector3D(qCos(phi) * qSin(theta), qSin(phi) * qSin(theta), qCos(theta));
-
-        double initE = 0;
-        for (std::size_t i = 0; i < energyCDF.getNBins(); i++)
-        {
-            if( QRandomGenerator::global()->generateDouble() < energyCDF.getBinContent(i))
-            {
-                initE = energyCDF.getBinCenter(i);
-                break;
-            }
-        }
-        return Particle(initPos, initDir, initE, 1.0);
-    }
+    Particle createParticle() const;
 };
 
+
+class MCSettings
+{
+private:
+    const Cylinder& cylinder;
+    const Source& source;
+    const int maxN;
+    const int maxScatterN;
+    const double minW;
+    const double minE;
+public:
+    MCSettings(const Cylinder& cyl, const Source& src, const int maxn, 
+               const int maxscattern, const double minw, const double mine)
+        : cylinder(cyl), source(src), maxN(maxn), maxScatterN(maxscattern),
+          minW(minw), minE(mine)
+    {}
+    // ~MCSettings();
+};

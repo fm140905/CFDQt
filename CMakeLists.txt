@@ -5,7 +5,7 @@ project(WaterCylinder CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Header)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Headers)
 
 find_package(Qt5 REQUIRED COMPONENTS Core Gui)
 
