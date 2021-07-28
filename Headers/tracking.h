@@ -13,7 +13,7 @@
 
 #include "cell.h"
 
-int deltaTracking(Particle& particle, const MCSettings& config);
+bool deltaTracking(Particle& particle, const MCSettings& config);
 int ComptonScattering(Particle& particle, const MCSettings& config);
 
 #endif // TRACKING_H

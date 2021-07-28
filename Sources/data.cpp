@@ -1,7 +1,7 @@
 #include "data.h"
 
-Material::Material(const std::string fpath, const int id)
-    : matID(id)
+Material::Material(const std::string fpath, const double d, const int id)
+    : density(d), matID(id)
 {
     // read attenuation coeffcients saved in txt
     std::ifstream fileptr;
@@ -14,14 +14,17 @@ Material::Material(const std::string fpath, const int id)
         throw std::runtime_error(errMessage);
     }
     std::string line;
+    // skip headers
+    std::getline(fileptr, line);
+    std::getline(fileptr, line);
     // Read one line at a time into the variable line:
     while(std::getline(fileptr, line))
     {
-        std::vector<float> lineData;
+        std::vector<double> lineData;
         std::stringstream lineStream(line);
 
-        float value;
-        // Read an float at a time from the line
+        double value;
+        // Read an double at a time from the line
         while(lineStream >> value)
         {
             lineData.push_back(value);
@@ -29,7 +32,7 @@ Material::Material(const std::string fpath, const int id)
         EBinCenters.push_back(lineData[0]);
         IntegralComptonCrossSection.push_back(lineData[1]);
         ComptonOverTotal.push_back(lineData[2]);
-        totalAtten.push_back(lineData[3]);
+        totalAtten.push_back(lineData[3] * density);
     }
     NEbin = EBinCenters.size();
     Emin = EBinCenters[0];
@@ -37,7 +40,7 @@ Material::Material(const std::string fpath, const int id)
     deltaE = (Emax - Emin) / (NEbin -1);
 }
 
-float Material::getAtten(const double erg) const
+double Material::getAtten(const double erg) const
 {
     int binNum = (erg - Emin) / deltaE + 0.5;
     if (binNum <= 0)
@@ -47,7 +50,7 @@ float Material::getAtten(const double erg) const
     return totalAtten[binNum];
     
 }
-float Material::getTotalComptonIntegral(const double erg) const
+double Material::getTotalComptonIntegral(const double erg) const
 {
     int binNum = (erg - Emin) / deltaE + 0.5;
     if (binNum <= 0)
@@ -55,9 +58,8 @@ float Material::getTotalComptonIntegral(const double erg) const
     else if (binNum >= NEbin - 1)
         return IntegralComptonCrossSection[NEbin - 1];
     return IntegralComptonCrossSection[binNum];
-    
 }
-float Material::getComptonOverTotal(const double erg) const
+double Material::getComptonOverTotal(const double erg) const
 {
     int binNum = (erg - Emin) / deltaE + 0.5;
     if (binNum <= 0)

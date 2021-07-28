@@ -8,8 +8,7 @@
  * @copyright Copyright (c) 2021
  * 
  */
-#ifndef DATA_H
-#define DATA_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -62,27 +61,32 @@ class Material
 {
 private:
     int matID;
+    double density; // g*cm^-3
     // center of energy bins, MeV
-    std::vector<float> EBinCenters;
+    std::vector<double> EBinCenters;
     // integrated Compton cross section over 4pi slod angle
-    std::vector<float> IntegralComptonCrossSection;
+    std::vector<double> IntegralComptonCrossSection;
     // Compton over total
-    std::vector<float> ComptonOverTotal;
+    std::vector<double> ComptonOverTotal;
     // total attenuation coefficient, cm^{-1}
-    std::vector<float> totalAtten;
+    std::vector<double> totalAtten;
     // min energy
-    float Emin;
-    float Emax;
-    float deltaE;
+    double Emin;
+    double Emax;
+    double deltaE;
     int NEbin;
 public:
     // constructor
-    Material(const std::string fpath, const int id);
+    Material(const std::string fpath, const double d, const int id);
     // ~Material();
 
-    float getAtten(const double erg) const;
-    float getTotalComptonIntegral(const double erg) const;
-    float getComptonOverTotal(const double erg) const;
+    double getMaxE() const {return Emax;}
+    double getMinE() const {return Emin;}
+    double getBinWidth() const {return deltaE;}
+    double getEBinCenter(const int i) const {return EBinCenters[i];}
+    double getNbins() const {return NEbin;}
+    double getDensity() const {return density;}
+    double getAtten(const double erg) const;
+    double getTotalComptonIntegral(const double erg) const;
+    double getComptonOverTotal(const double erg) const;
 };
-
-#endif // DATA_H

@@ -4,7 +4,7 @@
         "qapplication": "cpp"
     },
     "cmake.configureSettings": {
-        // "CMAKE_PREFIX_PATH": "/home/ming/Qt/5.12.3/gcc_64"
-        "CMAKE_PREFIX_PATH": "/home/mingf2/Qt5.12.10/5.12.10/gcc_64"
+        "CMAKE_PREFIX_PATH": "/home/ming/Qt/5.12.3/gcc_64"
+        // "CMAKE_PREFIX_PATH": "/home/mingf2/Qt5.12.10/5.12.10/gcc_64"
     }
 }

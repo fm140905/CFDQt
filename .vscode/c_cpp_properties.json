@@ -4,8 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                // "/home/ming/Qt/5.12.3/gcc_64/include/**"
-                "/home/mingf2/Qt5.12.10/5.12.10/gcc_64/include/**"
+                "/home/ming/Qt/5.12.3/gcc_64/include/**"
+                // "/home/mingf2/Qt5.12.10/5.12.10/gcc_64/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

@@ -30,6 +30,11 @@ bool Sphere::contain(const QVector3D& point) const
 }
 double Sphere::intersection(const Ray& ray) const
 {
+    QVector3D prtl2det = center - ray.getOrigin();
+    double proj = QVector3D::dotProduct(prtl2det, ray.getDirection());
+    if(proj <= 0)
+        return 0;
+    
     double d = center.distanceToLine(ray.getOrigin(), ray.getDirection());
     if(d >= radius)
         return 0;
