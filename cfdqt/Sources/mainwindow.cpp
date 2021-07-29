@@ -14,6 +14,9 @@
 #include <Qt3DRender/QBuffer>
 #include <Qt3DRender/QGeometry>
 
+#include "geometry.h"
+#include "cfdworker.h"
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::MainWindow)
@@ -28,26 +31,43 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->horizontalSlider->setMaximum(1000);
     ui->horizontalSlider->setMinimum(-1000);
-    ui->horizontalSlider->setTracking(false);
+//    ui->horizontalSlider->setTracking(false);
     ui->horizontalSlider_2->setMaximum(1000);
     ui->horizontalSlider_2->setMinimum(-1000);
-    ui->horizontalSlider_2->setTracking(false);
+//    ui->horizontalSlider_2->setTracking(false);
     ui->horizontalSlider_3->setMaximum(1000);
     ui->horizontalSlider_3->setMinimum(-1000);
-    ui->horizontalSlider_3->setTracking(false);
+//    ui->horizontalSlider_3->setTracking(false);
 
-    connect(ui->horizontalSlider, &QSlider::sliderMoved, this, &MainWindow::moveDetector);
-    connect(ui->horizontalSlider_2, &QSlider::sliderMoved, this, &MainWindow::moveDetector);
-    connect(ui->horizontalSlider_3, &QSlider::sliderMoved, this, &MainWindow::moveDetector);
+//    connect(ui->horizontalSlider, &QSlider::sliderMoved, this, &MainWindow::moveDetector);
+//    connect(ui->horizontalSlider_2, &QSlider::sliderMoved, this, &MainWindow::moveDetector);
+//    connect(ui->horizontalSlider_3, &QSlider::sliderMoved, this, &MainWindow::moveDetector);
 
-    connect(ui->horizontalSlider, &QSlider::sliderReleased, this, &MainWindow::updateSpectrum);
-    connect(ui->horizontalSlider_2, &QSlider::sliderReleased, this, &MainWindow::updateSpectrum);
-    connect(ui->horizontalSlider_3, &QSlider::sliderReleased, this, &MainWindow::updateSpectrum);
+    connect(ui->horizontalSlider, &QSlider::sliderReleased, this, &MainWindow::moveDetector);
+    connect(ui->horizontalSlider_2, &QSlider::sliderReleased, this, &MainWindow::moveDetector);
+    connect(ui->horizontalSlider_3, &QSlider::sliderReleased, this, &MainWindow::moveDetector);
+//    tally = new Tally(Sphere(QVector3D(100, 100, 10), 2.54), 100, 0, 1.0);
+
+    initSpectrum(ui->spectrum->getCanvas());
+
+    CFDWorker *worker = new CFDWorker;
+    worker->moveToThread(&workerThread);
+    connect(&workerThread, &QThread::finished, worker, &QObject::deleteLater);
+    connect(this, &MainWindow::started, worker, &CFDWorker::work);
+    connect(worker, &CFDWorker::spectrumChanged, this, &MainWindow::handleResults);
+    connect(this, &MainWindow::centerChanged, worker, &CFDWorker::onCenterChanged);
+    connect(this, &MainWindow::radiusChanged, worker, &CFDWorker::onRadiusChanged);
+    workerThread.start();
+
+    emit started();
+
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    workerThread.quit();
+    workerThread.wait();
 }
 
 void MainWindow::init3dwidget(Qt3DWidget* widget)
@@ -135,10 +155,31 @@ void MainWindow::rotateDetector()
 
 void MainWindow::moveDetector()
 {
-    static QVector3D currPos = QVector3D(100, 100, 10);
+    static QVector3D initPos = QVector3D(100, 100, 10);
     const double stepSize(0.01);
-    QVector3D newPos = QVector3D(ui->horizontalSlider->value(), ui->horizontalSlider_2->value(), ui->horizontalSlider_3->value());
-    detectorTransform->setTranslation(newPos * stepSize + currPos);
+    QObject* obj = sender();
+    QVector3D newPos{0, 0, 0};
+    if( obj == ui->horizontalSlider )
+    {
+        newPos = QVector3D(ui->horizontalSlider->value(), 0, 0);
+    }
+    else if( obj == ui->horizontalSlider_2 )
+    {
+        newPos = QVector3D(0, ui->horizontalSlider_2->value(), 0);
+    }
+    else if( obj == ui->horizontalSlider_3 )
+    {
+        newPos = QVector3D(0, 0, ui->horizontalSlider_3->value());
+    }
+    newPos = newPos * stepSize + initPos;
+    // update 3d view
+    detectorTransform->setTranslation(newPos);
+    // update spectrum
+    QSlider* slider = qobject_cast<QSlider*>(sender());
+//    if(!slider->isSliderDown())
+    {
+        emit centerChanged(newPos);
+    }
 }
 
 void drawLine(const QVector3D& start, const QVector3D& end, const QColor& color, Qt3DCore::QEntity *_rootEntity)
@@ -199,12 +240,68 @@ void drawLine(const QVector3D& start, const QVector3D& end, const QColor& color,
     lineEntity->addComponent(material);
 }
 
-void MainWindow::initSpectrum()
+void MainWindow::initSpectrum(CustomPlotZoom* customPlot)
 {
     //TODO
+    // configure axis rect:
+    customPlot->setInteractions(QCP::iRangeDrag|QCP::iRangeZoom); // this will also allow rescaling the color scale by dragging/zooming
+    customPlot->axisRect()->setupFullAxesBox(true);
+    customPlot->xAxis->setLabel("Energy (MeV)");
+    customPlot->yAxis->setLabel("Fluence per unit NPS");
+
+    // setup step line plot
+    customPlot->addGraph();
+//    plotdata->mMutex.lock();
+//    customPlot->graph()->setData(plotdata->getCoinBinCenters(), plotdata->getCoinBinCounts(), true);
+//    ui->spectrumCanvas->setCountsLabel(plotdata->getCoinTotalCounts());
+//    plotdata->mMutex.unlock();
+    customPlot->graph()->setLineStyle(QCPGraph::lsStepCenter);
+    customPlot->graph()->setBrush(QBrush(QColor(0, 0, 255, 20))); // fill with translucent blue
+    //    customPlot->rescaleAxes();
+    customPlot->yAxis->setRangeLower(0);
+    //    customPlot->yAxis->setRange(0, 500);
+
 }
 
-void MainWindow::updateSpectrum()
+void MainWindow::updateSpectrum(CustomPlotZoom* customPlot, const Tally& tally)
 {
     // TODO
+    customPlot->graph()->data().clear();
+    int counts = tally.getNPS();
+    std::vector<double> bins = tally.hist.getBinCenters();
+    std::vector<double> flux = tally.hist.getBinContents();
+    customPlot->graph()->setData(QVector<double>(bins.begin(), bins.end()),
+                                 QVector<double>(flux.begin(), flux.end()),true);
+
+    ui->spectrum->setCountsLabel(counts);
+    if (counts > 0 && customPlot->isAutoScaled())
+    {
+        handleUnZoom();
+        //        customPlot->rescaleAxes();
+    }
+    if(counts > 0 && ui->spectrum->getLogScaled())
+        customPlot->yAxis->setScaleType(QCPAxis::stLogarithmic);
+    else
+        customPlot->yAxis->setScaleType(QCPAxis::stLinear);
+    customPlot->replot();
+}
+
+void MainWindow::handleUnZoom()
+{
+    ui->spectrum->getCanvas()->rescaleAxes();
+    ui->spectrum->getCanvas()->yAxis->scaleRange(1.1);
+    if(!ui->spectrum->getLogScaled())
+    {
+        ui->spectrum->getCanvas()->yAxis->setRangeLower(0);
+    }
+    else
+    {
+        ui->spectrum->getCanvas()->yAxis->setRangeLower(1e-7);
+    }
+    ui->spectrum->getCanvas()->setAutoScale(true);
+
+}
+void MainWindow::handleResults(Tally tally)
+{
+    updateSpectrum(ui->spectrum->getCanvas(), tally);
 }

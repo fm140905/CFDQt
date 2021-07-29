@@ -15,4 +15,7 @@
         <file>icons/unzoom.svg</file>
         <file>icons/log.svg</file>
     </qresource>
+    <qresource prefix="/DATA">
+        <file>DATA/H2O.csv</file>
+    </qresource>
 </RCC>

@@ -32,13 +32,26 @@ SOURCES += \
     $$PWD/Sources/mainwindow.cpp \
     $$PWD/Sources/qcustomcanvas.cpp \
     $$PWD/Sources/qcustomplot.cpp \
-    $$PWD/Sources/customplotzoom.cpp
+    $$PWD/Sources/customplotzoom.cpp \
+    $$PWD/Sources/geometry.cpp \
+    $$PWD/Sources/data.cpp \
+    $$PWD/Sources/cell.cpp \
+    $$PWD/Sources/tracking.cpp \
+    $$PWD/Sources/cfd.cpp \
+    cfdworker.cpp
 
 HEADERS += \
     $$PWD/Headers/mainwindow.h \
     $$PWD/Headers/qcustomcanvas.h \
     $$PWD/Headers/qcustomplot.h \
-    $$PWD/Headers/customplotzoom.h
+    $$PWD/Headers/customplotzoom.h \
+    ../include/qt3dwidget.h \
+    $$PWD/Headers/geometry.h \
+    $$PWD/Headers/data.h \
+    $$PWD/Headers/cell.h \
+    $$PWD/Headers/tracking.h \
+    $$PWD/Headers/cfd.h \
+    cfdworker.h
 
 FORMS += \
     mainwindow.ui \
@@ -71,9 +84,9 @@ DISTFILES += \
 RESOURCES += \
     resources.qrc
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/qt3d-widget/lib/release/ -lqt3dwidget
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/qt3d-widget/lib/debug/ -lqt3dwidget
-else:unix: LIBS += -L$$PWD/qt3d-widget/lib/ -lqt3dwidget
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../lib/release/ -lqt3dwidget
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../lib/debug/ -lqt3dwidget
+else:unix: LIBS += -L$$PWD/../lib/ -lqt3dwidget
 
-INCLUDEPATH += $$PWD/qt3d-widget/include
-DEPENDPATH += $$PWD/qt3d-widget/include
+INCLUDEPATH += $$PWD/../include
+DEPENDPATH += $$PWD/../include

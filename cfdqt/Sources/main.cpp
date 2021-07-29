@@ -5,6 +5,8 @@
 
 int main(int argc, char *argv[])
 {
+    qRegisterMetaType<Tally>("Tally");
+
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
     format.setSamples(4);
     format.setVersion(3, 0);
