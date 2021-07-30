@@ -106,6 +106,7 @@ void MainWindow::init3dwidget(Qt3DWidget* widget)
     Qt3DExtras::QPhongAlphaMaterial *cylinderMaterial = new Qt3DExtras::QPhongAlphaMaterial();
     cylinderMaterial->setDiffuse(QColor(0, 0, 125));
     cylinderMaterial->setAmbient(QColor(0, 0, 125));
+    cylinderMaterial->setSpecular(QColor(0, 0, 125));
     cylinderMaterial->setAlpha(0.5);
 //    cylinderMaterial->setDiffuse(QColor(QRgb(0x928327)));
 //    cylinderMaterial->setAmbient("red");
@@ -160,7 +161,7 @@ void MainWindow::init3dwidget(Qt3DWidget* widget)
     cameraController->setCamera(widget->camera());
     //    widget->camera()->setPosition(QVector3D(-50, -50, 100));
     widget->camera()->lens()->setPerspectiveProjection(45.0f, 16.0f/9.0f, 0.1f, 1000.0f);
-    widget->camera()->setPosition(QVector3D(200, 200, 200.0f));
+    widget->camera()->setPosition(QVector3D(200, 200, 100.0f));
     widget->camera()->setUpVector(QVector3D(0, 0, -1));
     widget->camera()->setViewCenter(QVector3D(25, 25, 10));
 
