@@ -103,7 +103,7 @@ void CFDWorker::stopWorker()
 
 void CFDWorker::onCenterChanged(QVector3D newCenter)
 {
-    qDebug() << newCenter;
+//    qDebug() << newCenter;
     tally.setCenter(newCenter);
     changed=true;
     getSpectrum();

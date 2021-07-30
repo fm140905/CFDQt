@@ -5,6 +5,7 @@
 #include <Qt3DExtras/QCylinderMesh>
 #include <Qt3DExtras/QSphereMesh>
 #include <Qt3DExtras/QPhongMaterial>
+#include <Qt3DExtras/QPhongAlphaMaterial>
 #include <Qt3DExtras/QOrbitCameraController>
 #include <Qt3DExtras/QForwardRenderer>
 #include <Qt3DRender/QPointLight>
@@ -16,12 +17,21 @@
 
 #include "geometry.h"
 #include "cfdworker.h"
+#include <fstream>
+#include <iomanip>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->spectrum->setID(1);
+    connect(ui->spectrum, &QCustomCanvas::canvasCleared, this, &MainWindow::handleClear);
+    connect(ui->spectrum, &QCustomCanvas::canvasSaved2Image, this, &MainWindow::handleScreenShot);
+    connect(ui->spectrum, &QCustomCanvas::canvasSaved2Txt, this, &MainWindow::handleSave2txt);
+    connect(ui->spectrum, &QCustomCanvas::canvasLogscaled, this, &MainWindow::handleLogscale);
+    connect(ui->spectrum, &QCustomCanvas::canvasZoomedout, this, &MainWindow::handleUnZoom);
+
     init3dwidget(ui->openGLWidget);
 
 //    QTimer* animationTimer = new QTimer(this);
@@ -92,14 +102,40 @@ void MainWindow::init3dwidget(Qt3DWidget* widget)
 //    cylinderTransform->setScale(1.5f);
     cylinderTransform->setRotation(QQuaternion::fromAxisAndAngle(QVector3D(1.0f, 0.0f, 0.0f), 90.0f));
     cylinderTransform->setTranslation(QVector3D(25, 25, 26));
-    Qt3DExtras::QPhongMaterial *cylinderMaterial = new Qt3DExtras::QPhongMaterial();
+//    Qt3DExtras::QPhongMaterial *cylinderMaterial = new Qt3DExtras::QPhongMaterial();
+    Qt3DExtras::QPhongAlphaMaterial *cylinderMaterial = new Qt3DExtras::QPhongAlphaMaterial();
+    cylinderMaterial->setDiffuse(QColor(0, 0, 125));
+    cylinderMaterial->setAmbient(QColor(0, 0, 125));
+    cylinderMaterial->setAlpha(0.5);
 //    cylinderMaterial->setDiffuse(QColor(QRgb(0x928327)));
-    cylinderMaterial->setAmbient("red");
+//    cylinderMaterial->setAmbient("red");
     // Cylinder
     Qt3DCore::QEntity *cylinderEntity = new Qt3DCore::QEntity(rootEntity);
     cylinderEntity->addComponent(cylinder);
     cylinderEntity->addComponent(cylinderMaterial);
     cylinderEntity->addComponent(cylinderTransform);
+
+    // source cylinder
+    // Cylinder shape data
+    Qt3DExtras::QCylinderMesh *source = new Qt3DExtras::QCylinderMesh();
+    source->setRadius(1.4097);
+    source->setLength(5.63372);
+    source->setRings(20);
+    source->setSlices(20);
+    // CylinderMesh Transform
+    Qt3DCore::QTransform *sourceTransform = new Qt3DCore::QTransform();
+//    cylinderTransform->setScale(1.5f);
+    sourceTransform->setRotation(QQuaternion::fromAxisAndAngle(QVector3D(1.0f, 0.0f, 0.0f), 90.0f));
+    sourceTransform->setTranslation(QVector3D(25, 25, 8.4478));
+    Qt3DExtras::QPhongMaterial *sourceMaterial = new Qt3DExtras::QPhongMaterial();
+//    Qt3DExtras::QPhongAlphaMaterial *cylinderMaterial = new Qt3DExtras::QPhongAlphaMaterial();
+//    cylinderMaterial->setDiffuse(QColor(QRgb(0x928327)));
+    sourceMaterial->setAmbient("red");
+    // Cylinder
+    Qt3DCore::QEntity *sourceEntity = new Qt3DCore::QEntity(rootEntity);
+    sourceEntity->addComponent(source);
+    sourceEntity->addComponent(sourceMaterial);
+    sourceEntity->addComponent(sourceTransform);
 
     // detector sphere
     // Sphere shape data
@@ -157,25 +193,17 @@ void MainWindow::moveDetector()
 {
     static QVector3D initPos = QVector3D(100, 100, 10);
     const double stepSize(0.01);
-    QObject* obj = sender();
-    QVector3D newPos{0, 0, 0};
-    if( obj == ui->horizontalSlider )
-    {
-        newPos = QVector3D(ui->horizontalSlider->value(), 0, 0);
-    }
-    else if( obj == ui->horizontalSlider_2 )
-    {
-        newPos = QVector3D(0, ui->horizontalSlider_2->value(), 0);
-    }
-    else if( obj == ui->horizontalSlider_3 )
-    {
-        newPos = QVector3D(0, 0, ui->horizontalSlider_3->value());
-    }
+//    QObject* obj = sender();
+    QVector3D newPos = QVector3D(ui->horizontalSlider->value(), ui->horizontalSlider_2->value(), ui->horizontalSlider_3->value());
+
     newPos = newPos * stepSize + initPos;
     // update 3d view
     detectorTransform->setTranslation(newPos);
+    ui->detPosLabel->setText(QString("(%1, %2, %3)").arg(QString::number(newPos.x()),
+                                                        QString::number(newPos.y()),
+                                                        QString::number(newPos.z())));
     // update spectrum
-    QSlider* slider = qobject_cast<QSlider*>(sender());
+//    QSlider* slider = qobject_cast<QSlider*>(sender());
 //    if(!slider->isSliderDown())
     {
         emit centerChanged(newPos);
@@ -286,22 +314,130 @@ void MainWindow::updateSpectrum(CustomPlotZoom* customPlot, const Tally& tally)
     customPlot->replot();
 }
 
-void MainWindow::handleUnZoom()
+void MainWindow::handleUnZoom(int id)
 {
-    ui->spectrum->getCanvas()->rescaleAxes();
-    ui->spectrum->getCanvas()->yAxis->scaleRange(1.1);
-    if(!ui->spectrum->getLogScaled())
+    CustomPlotZoom* canvas;
+    bool logScaled=false;
+    if (id == 1)
     {
-        ui->spectrum->getCanvas()->yAxis->setRangeLower(0);
+        canvas = ui->spectrum->getCanvas();
+        logScaled = ui->spectrum->getLogScaled();
+    }
+    else
+        return;
+    canvas->rescaleAxes();
+    canvas->yAxis->scaleRange(1.1);
+    if(!logScaled)
+    {
+        canvas->yAxis->setRangeLower(0);
     }
     else
     {
-        ui->spectrum->getCanvas()->yAxis->setRangeLower(1e-7);
+        canvas->yAxis->setRangeLower(1e-7);
     }
-    ui->spectrum->getCanvas()->setAutoScale(true);
+    canvas->setAutoScale(true);
+    canvas->replot();
 
 }
+
+void MainWindow::handleScreenShot(int id)
+{
+    CustomPlotZoom* canvas;
+    QString key;
+    QDateTime dateTime = QDateTime::currentDateTime();
+    QString currentDateTime = dateTime.toString("yyyy-MM-dd-HH-mm-ss");
+    QString fileName;
+    if (id ==ui->spectrum->getID()) {
+        key = "Spectrum";
+        fileName = QString("Screenshot-%1-%2.png").arg(key, currentDateTime);
+        canvas = ui->spectrum->getCanvas();
+    }
+    else
+        return;
+
+    qDebug() << QString("Save %1").arg(key);
+    canvas->savePng(fileName, 500, 400);
+    ui->statusbar->showMessage(QString("%1 saved to: %2").arg(key, fileName));
+}
+
+void MainWindow::handleLogscale(int id)
+{
+    CustomPlotZoom* canvas;
+    bool logScaled=false;
+    if (id==ui->spectrum->getID())
+    {
+        canvas = ui->spectrum->getCanvas();
+        logScaled = ui->spectrum->getLogScaled();
+    }
+    else
+        return;
+
+    if(logScaled)
+        canvas->yAxis->setScaleType(QCPAxis::stLogarithmic);
+    else
+        canvas->yAxis->setScaleType(QCPAxis::stLinear);
+    canvas->replot();
+
+}
+void MainWindow::handleClear(int id)
+{
+    CustomPlotZoom* canvas;
+    if (id==ui->spectrum->getID())
+    {
+        canvas = ui->spectrum->getCanvas();
+        Tally tally(Sphere(QVector3D(0,0,0), 1),100, 0,1.0);
+        updateSpectrum(canvas, tally);
+    }
+    else
+        return;
+
+////    canvas->graph()->data().clear();
+//    auto plotdata = canvas->graph()->data();
+//    QVector<double> bins;
+//    for (int i = 0; i < plotdata->size(); i++)
+//    {
+//        bins.append(plotdata->at(i)->key);
+//    }
+//    QVector<double> counts(bins.size(), 0);
+//    canvas->graph()->setData(bins, counts, true);
+//    canvas->replot();
+}
+void MainWindow::handleSave2txt(int id)
+{
+    QDateTime dateTime = QDateTime::currentDateTime();
+    QString currentDateTime = dateTime.toString("yyyy-MM-dd-HH-mm-ss");
+    if (id == ui->spectrum->getID()) {
+        qDebug() << "Save spectrum to txt";
+        QString fileName = QString("Spectrum-%1.txt").arg(currentDateTime);
+        saveSpectrum2txt(fileName.toStdString());
+        ui->statusbar->showMessage(QString("Spectrum saved to: %1").arg(fileName));
+    }
+}
+
 void MainWindow::handleResults(Tally tally)
 {
     updateSpectrum(ui->spectrum->getCanvas(), tally);
+}
+
+bool MainWindow::saveSpectrum2txt(const std::string fileName)
+{
+    std::ofstream outf(fileName.c_str(), std::ios::out);
+    if (!outf.good())
+    {
+        return false;
+    }
+
+    outf << "     BinCenter      Counts\n";
+//    QVector<double> bins = ui->spectrum->getCanvas()->graph()->data()->
+//    const int binNum = ui->spectrum->getCanvas()->graph()->data()->size();
+    auto plotdata = ui->spectrum->getCanvas()->graph()->data();
+    for (int i = 0; i < plotdata->size(); i++)
+    {
+        outf << std::fixed    << std::setprecision(6)
+             << std::setw(8)  << plotdata->at(i)->key << '\t'
+             << std::scientific << plotdata->at(i)->value<< '\n';
+    }
+    outf.close();
+    //    qDebug() << "Text file saved.";
+    return true;
 }
