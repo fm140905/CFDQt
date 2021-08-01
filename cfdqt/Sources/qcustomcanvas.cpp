@@ -37,7 +37,7 @@ bool QCustomCanvas::getLogScaled()
 
 void QCustomCanvas::setCountsLabel(int counts)
 {
-    ui->countsLabel->setText(QString("Total counts: %1").arg(QString::number(counts)));
+    ui->countsLabel->setText(QString("NPS: %1").arg(QString::number(counts)));
 }
 
 void QCustomCanvas::handleSave2Txt()

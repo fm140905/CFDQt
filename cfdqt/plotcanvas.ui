@@ -108,7 +108,7 @@
      <item row="1" column="8" colspan="4">
       <widget class="QLabel" name="countsLabel">
        <property name="text">
-        <string>Total Counts: 0</string>
+        <string>NPS: 0</string>
        </property>
       </widget>
      </item>

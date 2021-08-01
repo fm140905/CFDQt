@@ -1,8 +1,9 @@
 # Simple GUI application for demonstrating real-time radiation flux calculation using CFD
-The program allows the user to move the detector using sliders and a gamma spectrum is calculated using CFD and rendered on the screen in real-time.
+User can move the detector using sliders. A gamma spectrum at current detector position is calculated using CFD and rendered on the screen in real-time.
 
 ## Prerequisites
 - Qt 5.13 or higher
+- OpenGL 3.0 or higher
 
 ## Build
   ```bash
@@ -17,4 +18,4 @@ The program allows the user to move the detector using sliders and a gamma spect
     build/cfdqt/CFDQt
 ```
 ## Demo
-<img src="Demo/zoom_0.gif" width="800" height="400" />
+<img src="Demo/demo.gif" width="800" height="400" />

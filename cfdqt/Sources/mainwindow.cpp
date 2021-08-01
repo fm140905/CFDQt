@@ -41,22 +41,18 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->horizontalSlider->setMaximum(1000);
     ui->horizontalSlider->setMinimum(-1000);
-//    ui->horizontalSlider->setTracking(false);
     ui->horizontalSlider_2->setMaximum(1000);
     ui->horizontalSlider_2->setMinimum(-1000);
-//    ui->horizontalSlider_2->setTracking(false);
     ui->horizontalSlider_3->setMaximum(1000);
     ui->horizontalSlider_3->setMinimum(-1000);
-//    ui->horizontalSlider_3->setTracking(false);
-
-//    connect(ui->horizontalSlider, &QSlider::sliderMoved, this, &MainWindow::moveDetector);
-//    connect(ui->horizontalSlider_2, &QSlider::sliderMoved, this, &MainWindow::moveDetector);
-//    connect(ui->horizontalSlider_3, &QSlider::sliderMoved, this, &MainWindow::moveDetector);
 
     connect(ui->horizontalSlider, &QSlider::sliderReleased, this, &MainWindow::moveDetector);
     connect(ui->horizontalSlider_2, &QSlider::sliderReleased, this, &MainWindow::moveDetector);
     connect(ui->horizontalSlider_3, &QSlider::sliderReleased, this, &MainWindow::moveDetector);
-//    tally = new Tally(Sphere(QVector3D(100, 100, 10), 2.54), 100, 0, 1.0);
+
+    ui->Xlabel->setText(QString("X = %1 cm").arg(QString::number(100)));
+    ui->Ylabel->setText(QString("Y = %1 cm").arg(QString::number(100)));
+    ui->Zlabel->setText(QString("Z = %1 cm").arg(QString::number(10)));
 
     initSpectrum(ui->spectrum->getCanvas());
 
@@ -198,17 +194,19 @@ void MainWindow::moveDetector()
     QVector3D newPos = QVector3D(ui->horizontalSlider->value(), ui->horizontalSlider_2->value(), ui->horizontalSlider_3->value());
 
     newPos = newPos * stepSize + initPos;
+    // update spectrum
+    emit centerChanged(newPos);
     // update 3d view
     detectorTransform->setTranslation(newPos);
-    ui->detPosLabel->setText(QString("(%1, %2, %3)").arg(QString::number(newPos.x()),
-                                                        QString::number(newPos.y()),
-                                                        QString::number(newPos.z())));
+    ui->Xlabel->setText(QString("X = %1 cm").arg(QString::number(newPos.x())));
+    ui->Ylabel->setText(QString("Y = %1 cm").arg(QString::number(newPos.y())));
+    ui->Zlabel->setText(QString("Z = %1 cm").arg(QString::number(newPos.z())));
     // update spectrum
 //    QSlider* slider = qobject_cast<QSlider*>(sender());
 //    if(!slider->isSliderDown())
-    {
-        emit centerChanged(newPos);
-    }
+//    {
+//        emit centerChanged(newPos);
+//    }
 }
 
 void drawLine(const QVector3D& start, const QVector3D& end, const QColor& color, Qt3DCore::QEntity *_rootEntity)
