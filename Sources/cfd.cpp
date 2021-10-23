@@ -34,7 +34,7 @@ int primaryContribution(const Particle& particle, const MCSettings& config, Tall
     
     // attenuation along the ray
     Ray ray = Ray(particle.pos, prtl2det);
-    double atten = config.ROI.intersection(ray) * config.cells[0].material.getAtten(particle.ergE);
+    double atten = config.ROI.intersection(ray) * config.cells[0].material.getPhotonTotalAtten(particle.ergE);
 
     tally.Fill(particle, std::exp(-atten)*score);
     
@@ -61,10 +61,10 @@ int scatterContribution(Particle particle, const MCSettings& config, Tally& tall
     
     // attenuation along the ray
     Ray ray = Ray(particle.pos, prtl2det);
-    double atten = config.ROI.intersection(ray) * config.cells[0].material.getAtten(newErg);
+    double atten = config.ROI.intersection(ray) * config.cells[0].material.getPhotonTotalAtten(newErg);
 
     // K-N equation 
-    double sigma = std::pow(beta, 2) * (beta + 1/beta + std::pow(cosAng, 2) - 1) / config.cells[0].material.getTotalComptonIntegral(newErg);
+    double sigma = std::pow(beta, 2) * (beta + 1/beta + std::pow(cosAng, 2) - 1) / config.cells[0].material.getPhotonCrossSection().getTotalComptonIntegral(newErg);
 
     double ratio = tally.getRadius() / length;
 

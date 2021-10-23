@@ -21,10 +21,10 @@ bool deltaTracking(Particle& particle, const MCSettings& config)
         randReal = QRandomGenerator::global()->generateDouble();
         // const Cell& currentCell = config.getCell(particle);
         const Cell& currentCell = config.cells[0];
-        if (randReal * currentCell.material.getAtten(particle.ergE) < muMax)
+        if (randReal * currentCell.material.getPhotonTotalAtten(particle.ergE) < muMax)
         {
             // update the wieght, w = w * P(interaction is Compton scattering)
-            particle.weight *= currentCell.material.getComptonOverTotal(particle.ergE);
+            particle.weight *= currentCell.material.getPhotonCrossSection().getComptonOverTotal(particle.ergE);
             return true;
             // Compton scattering happens next
         }

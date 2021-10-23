@@ -12,6 +12,7 @@
 
 #include "geometry.h"
 #include "data.h"
+#include "material.h"
 #include <QRandomGenerator>
 
 class Particle
@@ -112,15 +113,15 @@ public:
     {
         std::vector<double> maxatten;
         std::vector<double> ergs;
-        for (std::size_t i = 0; i < cells[0].material.getNbins(); i++)
+        for (std::size_t i = 0; i < cells[0].material.getPhotonCrossSection().getNbins(); i++)
         {
             double muMax(0);
-            double erg = cells[0].material.getEBinCenter(i);
+            double erg = cells[0].material.getPhotonCrossSection().getEBinCenter(i);
             for (std::size_t j = 0; j < cells.size(); j++)
             {
-                if (muMax < cells[j].material.getAtten(erg))
+                if (muMax < cells[j].material.getPhotonTotalAtten(erg))
                 {
-                    muMax = cells[j].material.getAtten(erg);
+                    muMax = cells[j].material.getPhotonTotalAtten(erg);
                 }
             }
             ergs.push_back(erg);

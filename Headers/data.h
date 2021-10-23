@@ -56,37 +56,3 @@ private:
     std::vector<double> binCounts;
     int totalCounts;
 };
-
-class Material
-{
-private:
-    int matID;
-    double density; // g*cm^-3
-    // center of energy bins, MeV
-    std::vector<double> EBinCenters;
-    // integrated Compton cross section over 4pi slod angle
-    std::vector<double> IntegralComptonCrossSection;
-    // Compton over total
-    std::vector<double> ComptonOverTotal;
-    // total attenuation coefficient, cm^{-1}
-    std::vector<double> totalAtten;
-    // min energy
-    double Emin;
-    double Emax;
-    double deltaE;
-    int NEbin;
-public:
-    // constructor
-    Material(const std::string fpath, const double d, const int id);
-    // ~Material();
-
-    double getMaxE() const {return Emax;}
-    double getMinE() const {return Emin;}
-    double getBinWidth() const {return deltaE;}
-    double getEBinCenter(const int i) const {return EBinCenters[i];}
-    double getNbins() const {return NEbin;}
-    double getDensity() const {return density;}
-    double getAtten(const double erg) const;
-    double getTotalComptonIntegral(const double erg) const;
-    double getComptonOverTotal(const double erg) const;
-};

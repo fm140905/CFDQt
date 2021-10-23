@@ -25,12 +25,24 @@ TEST(ParticleTest, constructor)
 
 TEST(CellTest, contain)
 {
+    std::string rootdir = "/home/mingf2/projects/2021_DTRA/";
     // initialize gemoetry
     const Cylinder waterCylinder = Cylinder(QVector3D(25, 25, 0), 52, 21.5);
     const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
+    // load cross-section tables
+    const PhotonCrossSection photonCrossSection(rootdir+"DATA/H2O.csv");
+    const NeutronCrossSection H1NeutronCrossSection(rootdir+"DATA/H1-total-cross-section.txt",
+                                                    rootdir+"DATA/H1-elatic-scattering-cross-section.txt");
+    const NeutronCrossSection O16NeutronCrossSection(rootdir+"DATA/O16-total-cross-section.txt",
+                                                     rootdir+"DATA/O16-elatic-scattering-cross-section.txt",
+                                                     rootdir+"DATA/O16-elastic-scattering-PDF.txt",
+                                                     rootdir+"DATA/O16-elastic-scattering-CDF.txt");
+    // create nuclides
+    const Nuclide H1(1, 1, H1NeutronCrossSection, photonCrossSection);
+    const Nuclide O16(8, 16, O16NeutronCrossSection, photonCrossSection);
     // initialize material
     const double waterDensity = 0.99; // g cm^-3
-    const Material water = Material("/media/ming/DATA/projects/2021_DTRA/waterCylinder/DATA/H2O.csv", waterDensity, 18);
+    const Material water = Material(waterDensity, 18, {{2, H1}, {1, O16}});
     // initialize cell
     const Cell waterCell = Cell(water, waterDensity, waterCylinder);
 

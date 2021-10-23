@@ -68,28 +68,52 @@ bool NeutronCrossSection::loadElasticCrossSection(std::string elasticCrossSectio
 }
 bool NeutronCrossSection::loadDAPDFFile(std::string DAPDFFile)
 {
-    return loadDAFile(DAPDFFile, DAPDF);
+    if (DAPDFFile.size() == 0)
+    {
+        // uniform distribution on [-1,1]
+        DAPDF.insert({1.5e7, std::vector<double>(101, 0.5)});
+        return true;
+    }
+    else
+    {
+        return loadDAFile(DAPDFFile, DAPDF);
+    }
+    
 }
 bool NeutronCrossSection::loadDAInverseCDFFile(std::string DAInverseCDFFile)
 {
-    return loadDAFile(DAInverseCDFFile, DAInverseCDF);
+    if (DAInverseCDFFile.size() == 0)
+    {
+        // linear distribution on [-1, 1]
+        std::vector<double> invcdf(101, 0);
+        for (int i = 0; i < 101; i++)
+        {
+            invcdf[i] = -1 + 0.02 * double(i);
+        }
+        DAInverseCDF.insert({1.5e7, invcdf});
+        return true;
+    }
+    else
+    {
+        return loadDAFile(DAInverseCDFFile, DAInverseCDF);
+    }
 }
 
-const double& NeutronCrossSection::getTotalMicroScopicCrossSectionAt(double energy)
+double NeutronCrossSection::getTotalMicroScopicCrossSectionAt(double energy) const
 {
     return getClosestEntry(energy, totalMicroscopicCrossSection);
 }
-const double& NeutronCrossSection::getElasticMicroScopicCrossSectionAt(double energy)
+double NeutronCrossSection::getElasticMicroScopicCrossSectionAt(double energy) const
 {
     return getClosestEntry(energy, elasticMicroscopicCrossSection);
 }
-const double& NeutronCrossSection::getDAPDFAt(double energy, double mu)
+double NeutronCrossSection::getDAPDFAt(double energy, double mu) const
 {
     const std::vector<double>& entry = getClosestEntry(energy, DAPDF);
     int mu_idx = std::floor((mu+1) / 0.02);
     return entry[mu_idx];
 }
-const double& NeutronCrossSection::getDAInvCDFAt(double energy, double probability)
+double NeutronCrossSection::getDAInvCDFAt(double energy, double probability) const
 {
     const std::vector<double>& entry = getClosestEntry(energy, DAInverseCDF);
     double p_idx = std::floor(probability / 0.01);
@@ -103,4 +127,108 @@ const double& NeutronCrossSection::getDAInvCDFAt(double energy, double probabili
     // return val;
 
     return entry[static_cast<int>(p_idx)];
+}
+
+PhotonCrossSection::PhotonCrossSection(const std::string fpath)
+{
+    // read attenuation coeffcients saved in txt
+    std::ifstream fileptr;
+    fileptr.open(fpath, std::ios::in);
+    if (!fileptr.is_open())
+    {
+        std::string errMessage = "can't open file: " + fpath;
+        throw std::runtime_error(errMessage);
+    }
+    std::string line;
+    // skip headers
+    std::getline(fileptr, line);
+    std::getline(fileptr, line);
+    // Read one line at a time into the variable line:
+    while(std::getline(fileptr, line))
+    {
+        std::vector<double> lineData;
+        std::stringstream lineStream(line);
+
+        double value;
+        // Read an double at a time from the line
+        while(lineStream >> value)
+        {
+            lineData.push_back(value);
+        }
+        EBinCenters.push_back(lineData[0]);
+        IntegralComptonCrossSection.push_back(lineData[1]);
+        ComptonOverTotal.push_back(lineData[2]);
+        totalAtten.push_back(lineData[3]);
+    }
+    NEbin = EBinCenters.size();
+    Emin = EBinCenters[0];
+    Emax = EBinCenters[NEbin - 1];
+    deltaE = (Emax - Emin) / (NEbin -1);
+}
+
+double PhotonCrossSection::getAtten(const double erg) const
+{
+    int binNum = (erg - Emin) / deltaE + 0.5;
+    if (binNum <= 0)
+        return totalAtten[0];
+    else if (binNum >= NEbin - 1)
+        return totalAtten[NEbin - 1];
+    return totalAtten[binNum];
+    
+}
+double PhotonCrossSection::getTotalComptonIntegral(const double erg) const
+{
+    int binNum = (erg - Emin) / deltaE + 0.5;
+    if (binNum <= 0)
+        return IntegralComptonCrossSection[0];
+    else if (binNum >= NEbin - 1)
+        return IntegralComptonCrossSection[NEbin - 1];
+    return IntegralComptonCrossSection[binNum];
+}
+double PhotonCrossSection::getComptonOverTotal(const double erg) const
+{
+    int binNum = (erg - Emin) / deltaE + 0.5;
+    if (binNum <= 0)
+        return ComptonOverTotal[0];
+    else if (binNum >= NEbin - 1)
+        return ComptonOverTotal[NEbin - 1];
+    return ComptonOverTotal[binNum];
+}
+
+Material::Material(const double d, const int id, const std::vector<std::pair<double, Nuclide>>& comp)
+    : density(d), matID(id), 
+      compositions(comp), 
+      photonCrossSection(comp[0].second.getPhotonCrossSection())
+{
+    molecularMass = 0;
+    int densestNeutronIdx(0);
+    int neutronGridNum(0);
+    // int densestPhotonIdx(0);
+    // int photonGridNum(0);
+    for (int i=0;i<compositions.size();i++)
+    {
+        const auto& v = compositions[i];
+        molecularMass += v.first * v.second.getAtomicWeight();
+        if (neutronGridNum < v.second.getNeutronCrossSection().getTotalMicroScopicCrossSectionSize())
+        {
+            neutronGridNum = v.second.getNeutronCrossSection().getTotalMicroScopicCrossSectionSize();
+            densestNeutronIdx = i;
+        }
+        // photon cross sections have the same size
+    }
+    std::vector<double> neutronErgGrid;
+    for (auto &&v : compositions[densestNeutronIdx].second.getNeutronCrossSection().getTotalMicroScopicCrossSection())
+    {
+        neutronErgGrid.push_back(v.first);
+    }
+    const double rho_M_NA = density / molecularMass * 0.60221409; // 1e24 * cm^-3
+    for (auto &&energy : neutronErgGrid)
+    {
+        double weightCrossSection(0); // barns, 1e-24 cm^2
+        for (auto &&v : compositions)
+        {
+            weightCrossSection += v.first * v.second.getNeutronCrossSection().getTotalMicroScopicCrossSectionAt(energy);
+        }
+        neutronTotalMacroscopicCrossSection.insert({energy, weightCrossSection * rho_M_NA});
+    }
 }
