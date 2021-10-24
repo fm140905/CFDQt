@@ -1,4 +1,5 @@
 #include "cfd.h"
+#include <iostream>
 
 int forceDetection(Particle& particle, const MCSettings& config, Tally& tally)
 {
@@ -33,7 +34,7 @@ int primaryContribution(const Particle& particle, const MCSettings& config, Tall
     
     
     // attenuation along the ray
-    Ray ray = Ray(particle.pos, prtl2det);
+    Ray ray = Ray(particle.pos, particle.dir);
     double atten = config.ROI.intersection(ray) * config.cells[0].material.getPhotonTotalAtten(particle.ergE);
 
     tally.Fill(particle, std::exp(-atten)*score);
@@ -119,7 +120,7 @@ int primaryContributionNeutron(const Particle& particle, const MCSettings& confi
     
     
     // attenuation along the ray
-    Ray ray = Ray(particle.pos, prtl2det);
+    Ray ray = Ray(particle.pos, particle.dir);
     double atten = config.ROI.intersection(ray) * config.cells[0].material.getNeutronTotalAtten(particle.ergE);
 
     tally.Fill(particle, std::exp(-atten)*score);
@@ -185,12 +186,15 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
         {
             mu_cms = (cosAng * std::sqrt(A*A-1+cosAng*cosAng) - 1 + cosAng*cosAng) / A; 
             if(std::abs(mu_cms) > 1.0)
-                continue;
+            {
                 // mu_cms = 1.0;
                 // throw std::runtime_error(std::string("Cannot find mu_cms for mu_lab = ") + std::to_string(cosAng));
+                std::cout << std::string("Cannot find mu_cms for mu_lab = ") + std::to_string(cosAng) << '\n';
+                continue;
+            }
             // neutron energy in cms
-            E_cms = (A/A+1)*(A/A+1);
-            E_lab = (1+A*A+2*A*mu_cms) / ((A+1) * (A+1));
+            E_cms = std::pow(A/(A+1), 2);
+            E_lab = (1+A*A+2*A*mu_cms) / std::pow(A+1, 2);
             if (E_lab * particle.ergE < tally.getMinE() ||
                 E_lab * particle.ergE > tally.getMaxE())
             {
@@ -214,11 +218,12 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
     }
 
     // for normalizing probablities of scattering with each nuclide
-    double totalElasticCrossSection = std::accumulate(scatterNuclideProbs.begin(), scatterNuclideProbs.end(), 0);
+    // double totalElasticCrossSection = std::accumulate(scatterNuclideProbs.begin(), scatterNuclideProbs.end(), 0);
+    double totalTotalCrossSection = config.cells[0].material.getNeutronTotalMicroscopicCrossSection(particle.ergE);
     for (int i = 0; i < nuclidesNum; i++)
     {
         particle.ergE = E_labs[i];
-        tally.Fill(particle, scatterNuclideProbs[i] / totalElasticCrossSection * unattenProbs[i] * scores[i]);
+        tally.Fill(particle, scatterNuclideProbs[i] / totalTotalCrossSection * unattenProbs[i] * scores[i]);
     }
     return 0;
 }

@@ -252,7 +252,7 @@ Material::Material(const double d, const int id, const std::vector<std::pair<dou
     {
         neutronErgGrid.push_back(v.first);
     }
-    const double rho_M_NA = density / molecularMass * 0.60221409; // 1e24 * cm^-3
+    micro2macro = density / molecularMass * 0.60221409; // 1e24 * cm^-3
     for (auto &&energy : neutronErgGrid)
     {
         double weightCrossSection(0); // barns, 1e-24 cm^2
@@ -266,7 +266,7 @@ Material::Material(const double d, const int id, const std::vector<std::pair<dou
         {
             invCDF[i] /= weightCrossSection;
         }
-        neutronTotalMacroscopicCrossSection.insert({energy, weightCrossSection * rho_M_NA});
+        neutronTotalMicroscopicCrossSection.insert({energy, weightCrossSection});
         nuclideInvCDF.insert({energy, invCDF});
     }
 }

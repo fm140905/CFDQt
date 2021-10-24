@@ -34,12 +34,14 @@ int main(int argc, char** argv)
     // initialize material
     const double waterDensity = 0.99; // g cm^-3
     const Material water = Material(waterDensity, 18, {{2, H1}, {1, O16}});
+    // const double waterDensity = 0.11; // g cm^-3
+    // const Material water = Material(waterDensity, 18, {{1, H1}});
     // initialize cell
     const Cell waterCell = Cell(water, waterDensity, waterCylinder);
     // initialize source
-    Histogram gammaCDF = Histogram(1, 0, 1e6*2); // eV for neutron, MeV for gamma
-    gammaCDF.setBinContents(std::vector<double>{1});
-    const Source gammaSource = Source(sourceCylinder, gammaCDF);
+    Histogram srcEnergyCDF = Histogram(1, 0, 999999*2); // eV for neutron, MeV for gamma
+    srcEnergyCDF.setBinContents(std::vector<double>{1});
+    const Source gammaSource = Source(sourceCylinder, srcEnergyCDF);
     // initialize settings
     const int maxN = 100000;
     const double maxScatterN = 100;
@@ -48,12 +50,14 @@ int main(int argc, char** argv)
     const MCSettings config = MCSettings(waterCylinder, std::vector<Cell>{waterCell}, gammaSource, maxN, maxScatterN, minW, minE);
     // initialize tally F2
     const Sphere detector = Sphere(QVector3D(75, 75, 10), 2.54);
-    Tally tally = Tally(detector, 100, 1e-4, 1e6, true);
+    // // linear
+    // Tally tally = Tally(detector, 100, 1e-4, 1e6);
+    // lethargy
+    Tally tally = Tally(detector, 110, 1e-4, 1e7, true);
 
     // Tally energy = Tally(detector, 100, 0, 1e6);
 
-    // run photon transport and CFD
-    // std::vector<Particle> scatterParticles;
+    // run neutron transport and CFD
     auto startTime = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < config.maxN; i++)
     {
@@ -73,12 +77,6 @@ int main(int argc, char** argv)
             prtl.scatterN += 1;
             forceDetectionNeutron(prtl, config, tally);
             neutronElasticScattering(prtl, config);
-            // ComptonScattering(prtl, config);
-            
-            // if (prtl.scatterN == 1)
-            // {
-            //     energy.Fill(prtl);
-            // }
         }
     }
 

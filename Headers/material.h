@@ -162,7 +162,8 @@ private:
     double molecularMass;
     std::vector<std::pair<double, Nuclide>> compositions;
     std::map<double, std::vector<double>> nuclideInvCDF;
-    std::map<double, double> neutronTotalMacroscopicCrossSection; // cm^{-1}
+    double micro2macro; // macro = micro * rho / M * NA, barn -> cm^-1
+    std::map<double, double> neutronTotalMicroscopicCrossSection; // barn
     const PhotonCrossSection photonCrossSection;
     // std::map<double, double> photonTotalMacroscopicCrossSection; // cm^{-1}
 public:
@@ -171,7 +172,8 @@ public:
     Material(const double d, const int id, const std::vector<std::pair<double, Nuclide>>& comp);
 
     double getDensity() const {return density;}
-    double getNeutronTotalAtten(double energy) const {return getClosestEntry(energy, neutronTotalMacroscopicCrossSection);}
+    double getNeutronTotalAtten(double energy) const {return micro2macro * getNeutronTotalMicroscopicCrossSection(energy);}
+    double getNeutronTotalMicroscopicCrossSection(double energy) const {return getClosestEntry(energy, neutronTotalMicroscopicCrossSection);}
     // double getPhotonTotalAtten(double energy) const {return getClosestEntry(energy, photonTotalMacroscopicCrossSection);}
     double getPhotonTotalAtten(double energy) const {return density * photonCrossSection.getAtten(energy);}
     const PhotonCrossSection& getPhotonCrossSection() const {return photonCrossSection;}
