@@ -14,6 +14,8 @@
 #include "cell.h"
 
 bool deltaTracking(Particle& particle, const MCSettings& config);
+bool deltaTrackingNeutron(Particle& particle, const MCSettings& config);
 int ComptonScattering(Particle& particle, const MCSettings& config);
+int neutronElasticScattering(Particle& particle, const MCSettings& config);
 
 #endif // TRACKING_H

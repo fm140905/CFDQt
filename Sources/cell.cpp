@@ -21,13 +21,36 @@ Particle Source::createParticle() const
     QVector3D initDir = QVector3D(sintheta * qCos(phi), sintheta * qSin(phi), costheta);
 
     double initE = 0;
+    a = QRandomGenerator::global()->generateDouble();
     for (std::size_t i = 0; i < energyCDF.getNBins(); i++)
     {
-        if( QRandomGenerator::global()->generateDouble() < energyCDF.getBinContent(i))
+        if( a < energyCDF.getBinContent(i))
         {
             initE = energyCDF.getBinCenter(i);
             break;
         }
     }
     return Particle(initPos, initDir, initE, 1.0);
+}
+
+void Particle::scatter(const double cosAng)
+{
+    double alpha = 2 * M_PI * QRandomGenerator::global()->generateDouble(); // angel phi
+    double R1 = dir.x();
+    double R2 = dir.y();
+    double R3 = dir.z();
+    double sinAng = std::sqrt(1 - cosAng * cosAng);
+    if (std::abs(std::abs(R3) - 1) > 1e-8)
+    {
+        double eta = 1.0 / std::sqrt(1 - R3 * R3);
+        dir.setX(cosAng * R1 + sinAng * (std::cos(alpha) * R3 * R1 - std::sin(alpha) * R2) * eta);
+        dir.setY(cosAng * R2 + sinAng * (std::cos(alpha) * R3 * R2 + std::sin(alpha) * R1) * eta);
+        dir.setZ(cosAng * R3 - sinAng * std::cos(alpha) / eta);
+    }
+    else
+    {
+        dir.setX(sinAng * std::cos(alpha));
+        dir.setY(sinAng * std::sin(alpha));
+        dir.setZ(cosAng * R3);
+    }
 }

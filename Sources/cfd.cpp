@@ -74,11 +74,151 @@ int scatterContribution(Particle particle, const MCSettings& config, Tally& tall
     // // contribution to tally F2, integrated over the spherical surface
     // double score = 1 / tally.getArea() * sigma * ratio * std::log((1+ratio) / (1-ratio));
     // contribution to tally F4
-    double avgTrackLength = 4*tally.getRadius()/3.0;
-    double score = 2 * sigma * (1-std::sqrt(1-ratio*ratio)) * avgTrackLength / tally.getVolume();
+    // double avgTrackLength = 4*tally.getRadius()/3.0;
+    // double score = 2 * sigma * (1-std::sqrt(1-ratio*ratio)) * avgTrackLength / tally.getVolume();
+    double lbda= ratio - 0.5 * (1-ratio*ratio) * std::log((1+ratio) / (1-ratio));
+    double score = 2 * sigma * length * lbda / tally.getVolume();
 
     particle.ergE *= beta;
     tally.Fill(particle, std::exp(-atten)* score);
 
+    return 0;
+}
+
+int forceDetectionNeutron(Particle& particle, const MCSettings& config, Tally& tally)
+{
+    if (particle.scatterN == 0)
+    {
+        primaryContributionNeutron(particle, config, tally);
+    }
+    else
+    {
+        scatterContributionNeutron(particle, config, tally);
+    }
+    return 0;
+}
+
+
+int primaryContributionNeutron(const Particle& particle, const MCSettings& config, Tally& tally)
+{
+    QVector3D prtl2det = tally.getCenter() - particle.pos;
+    double proj = QVector3D::dotProduct(prtl2det, particle.dir);
+    if(proj <= 0)
+        return 0;
+    
+    double d = tally.getCenter().distanceToLine(particle.pos, particle.dir);
+    if (d >= tally.getRadius())
+        return 0;
+
+    // // F1 tally
+    // double score = 1;
+    // // F2 tally
+    // double score = 1 / (tally.getArea() * std::sqrt(1-std::pow(d / tally.getRadius(), 2.0)));
+    // F4 tally
+    double score = 2 * std::sqrt(std::pow(tally.getRadius(), 2.0) - std::pow(d, 2.0)) / tally.getVolume();
+    
+    
+    // attenuation along the ray
+    Ray ray = Ray(particle.pos, prtl2det);
+    double atten = config.ROI.intersection(ray) * config.cells[0].material.getNeutronTotalAtten(particle.ergE);
+
+    tally.Fill(particle, std::exp(-atten)*score);
+    
+    return 0;
+}
+
+int scatterContributionNeutron(Particle particle, const MCSettings& config, Tally& tally)
+{
+    // determine the scattering angle if the particle
+    // were scattered towards the detector
+    QVector3D prtl2det = tally.getCenter() - particle.pos;
+    const double length = prtl2det.length();
+    prtl2det.normalize();
+    const double cosAng = QVector3D::dotProduct(particle.dir, prtl2det); // mu_lab
+    
+    // attenuation along the ray
+    Ray ray = Ray(particle.pos, prtl2det);
+    const double attenLength = config.ROI.intersection(ray);
+
+    const double ratio = tally.getRadius() / length;
+
+    // average track length per unit volume integrated over the solid angle subtended by detector = 2pi * averageF4,
+    // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
+    const double averageF4 = length / tally.getVolume() * 
+                        (ratio - 0.5 * (1-ratio*ratio) * std::log((1+ratio)/(1-ratio)));
+
+    // iterate all nuclides that the neutron can interact with
+    const int nuclidesNum = config.cells[0].material.getNuclidesNumber();
+    std::vector<double> scatterNuclideProbs(nuclidesNum, 0);
+    std::vector<double> unattenProbs(nuclidesNum, 0);
+    std::vector<double> scores(nuclidesNum, 0);
+    std::vector<double> E_labs(nuclidesNum, 0);
+    int nuclideIdx(0);
+    double E_cms(0);
+    double E_lab(0);
+    double mu_cms(0);
+    double pdf(0);
+    double dmu_cm_over_du_lab(0);
+    for (auto &&comp : config.cells[0].material.getNuclides())
+    {
+        const Nuclide& nuclide = comp.second;
+        const double A = nuclide.getAtomicWeight();
+        // special case, H-1
+        if (std::abs(A - 1) < 0.1)
+        {
+            if(cosAng < 0)
+            {
+                nuclideIdx ++;
+                continue; // back-scatter is not possible
+            }
+            // E_cms = 0.25;
+            E_lab = cosAng * cosAng;
+            if (E_lab * particle.ergE < tally.getMinE() ||
+                E_lab * particle.ergE > tally.getMaxE())
+            {
+                continue;
+            }
+            pdf = 0.5;
+            dmu_cm_over_du_lab = 4 * cosAng;
+        }
+        else
+        {
+            mu_cms = (cosAng * std::sqrt(A*A-1+cosAng*cosAng) - 1 + cosAng*cosAng) / A; 
+            if(std::abs(mu_cms) > 1.0)
+                continue;
+                // mu_cms = 1.0;
+                // throw std::runtime_error(std::string("Cannot find mu_cms for mu_lab = ") + std::to_string(cosAng));
+            // neutron energy in cms
+            E_cms = (A/A+1)*(A/A+1);
+            E_lab = (1+A*A+2*A*mu_cms) / ((A+1) * (A+1));
+            if (E_lab * particle.ergE < tally.getMinE() ||
+                E_lab * particle.ergE > tally.getMaxE())
+            {
+                continue;
+            }
+            pdf = nuclide.getNeutronCrossSection().getDAPDFAt(particle.ergE, mu_cms);
+            dmu_cm_over_du_lab = std::sqrt(E_lab / E_cms) / (1-cosAng / (A+1) * std::sqrt(1/E_lab));
+
+        }
+        // probability that neutron scatters by nuclide i 
+        scatterNuclideProbs[nuclideIdx] = comp.first * 
+                nuclide.getNeutronCrossSection().getElasticMicroScopicCrossSectionAt(particle.ergE);
+        // energy of scattered neutron in lab system
+        E_lab *= particle.ergE;
+        E_labs[nuclideIdx] = E_lab;
+        // probablity that neutron can reach detector without being attenuated
+        unattenProbs[nuclideIdx] = std::exp(-attenLength * config.cells[0].material.getNeutronTotalAtten(E_lab));
+        // F4 tally, PDF(u_cm) * du_cm / du_lab * average constribution integrated over detector sphere
+        scores[nuclideIdx] = pdf * dmu_cm_over_du_lab * averageF4;
+        nuclideIdx ++;
+    }
+
+    // for normalizing probablities of scattering with each nuclide
+    double totalElasticCrossSection = std::accumulate(scatterNuclideProbs.begin(), scatterNuclideProbs.end(), 0);
+    for (int i = 0; i < nuclidesNum; i++)
+    {
+        particle.ergE = E_labs[i];
+        tally.Fill(particle, scatterNuclideProbs[i] / totalElasticCrossSection * unattenProbs[i] * scores[i]);
+    }
     return 0;
 }

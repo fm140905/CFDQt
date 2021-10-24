@@ -11,7 +11,6 @@
 
 int main(int argc, char** argv)
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
     struct stat st = {0};
     // create directories to save the output files and pics, works in Linux
     if (stat("output", &st) == -1) {
@@ -19,14 +18,14 @@ int main(int argc, char** argv)
     }
     std::string rootdir = "/home/mingf2/projects/2021_DTRA/";
     // initialize gemoetry
-    const Cylinder waterCylinder = Cylinder(QVector3D(25, 25, 0), 52, 21.5);
+    const Cylinder waterCylinder = Cylinder(QVector3D(25, 25, 0), 52, 5);
     const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
     // load cross-section tables
     const PhotonCrossSection photonCrossSection(rootdir+"DATA/H2O.csv");
     const NeutronCrossSection H1NeutronCrossSection(rootdir+"DATA/H1-total-cross-section.txt",
-                                                    rootdir+"DATA/H1-elatic-scattering-cross-section.txt");
+                                                    rootdir+"DATA/H1-elastic-scattering-cross-section.txt");
     const NeutronCrossSection O16NeutronCrossSection(rootdir+"DATA/O16-total-cross-section.txt",
-                                                     rootdir+"DATA/O16-elatic-scattering-cross-section.txt",
+                                                     rootdir+"DATA/O16-elastic-scattering-cross-section.txt",
                                                      rootdir+"DATA/O16-elastic-scattering-PDF.txt",
                                                      rootdir+"DATA/O16-elastic-scattering-CDF.txt");
     // create nuclides
@@ -38,23 +37,24 @@ int main(int argc, char** argv)
     // initialize cell
     const Cell waterCell = Cell(water, waterDensity, waterCylinder);
     // initialize source
-    Histogram gammaCDF = Histogram(1, 0, 0.661*2);
+    Histogram gammaCDF = Histogram(1, 0, 1e6*2); // eV for neutron, MeV for gamma
     gammaCDF.setBinContents(std::vector<double>{1});
     const Source gammaSource = Source(sourceCylinder, gammaCDF);
     // initialize settings
-    const int maxN = 1000000;
-    const double maxScatterN = 5;
-    const double minE = 0.1;
+    const int maxN = 100000;
+    const double maxScatterN = 100;
+    const double minE = 1;  // eV for neutron, MeV for gamma
     const double minW = 0.01;
     const MCSettings config = MCSettings(waterCylinder, std::vector<Cell>{waterCell}, gammaSource, maxN, maxScatterN, minW, minE);
     // initialize tally F2
-    const Sphere detector = Sphere(QVector3D(100, 100, 10), 2.54);
-    Tally tally = Tally(detector, 100, 0, 1.0);
+    const Sphere detector = Sphere(QVector3D(75, 75, 10), 2.54);
+    Tally tally = Tally(detector, 100, 1e-4, 1e6, true);
 
-    Tally energy = Tally(detector, 100, 0, 1.0);
+    // Tally energy = Tally(detector, 100, 0, 1e6);
 
     // run photon transport and CFD
     // std::vector<Particle> scatterParticles;
+    auto startTime = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < config.maxN; i++)
     {
         // create a new particle from source
@@ -62,17 +62,19 @@ int main(int argc, char** argv)
         assert(config.ROI.contain(prtl.pos));
 
         // primary contribution
-        forceDetection(prtl, config, tally);
+        forceDetectionNeutron(prtl, config, tally);
 
         // transport
         while (prtl.scatterN < config.maxScatterN &&
                prtl.ergE > config.minE &&
                prtl.weight > config.minW &&
-               deltaTracking(prtl, config))
+               deltaTrackingNeutron(prtl, config))
         {
             prtl.scatterN += 1;
-            forceDetection(prtl, config, tally);
-            ComptonScattering(prtl, config);
+            forceDetectionNeutron(prtl, config, tally);
+            neutronElasticScattering(prtl, config);
+            // ComptonScattering(prtl, config);
+            
             // if (prtl.scatterN == 1)
             // {
             //     energy.Fill(prtl);
@@ -92,9 +94,9 @@ int main(int argc, char** argv)
         std::string errMessage = "can't open file: " + fpath;
         throw std::runtime_error(errMessage);
     }
-    for (std::size_t i = 0; i < tally.hist.getNBins(); i++)
+    for (std::size_t i = 0; i < tally.getNBins(); i++)
     {
-        fileptr << tally.hist.getBinCenter(i) << '\t' << tally.hist.getBinContent(i) / config.maxN << '\n';
+        fileptr << tally.getBinCenter(i) << '\t' << tally.getBinContent(i) / config.maxN << '\n';
     }
     fileptr.close();
     

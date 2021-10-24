@@ -32,9 +32,9 @@ TEST(CellTest, contain)
     // load cross-section tables
     const PhotonCrossSection photonCrossSection(rootdir+"DATA/H2O.csv");
     const NeutronCrossSection H1NeutronCrossSection(rootdir+"DATA/H1-total-cross-section.txt",
-                                                    rootdir+"DATA/H1-elatic-scattering-cross-section.txt");
+                                                    rootdir+"DATA/H1-elastic-scattering-cross-section.txt");
     const NeutronCrossSection O16NeutronCrossSection(rootdir+"DATA/O16-total-cross-section.txt",
-                                                     rootdir+"DATA/O16-elatic-scattering-cross-section.txt",
+                                                     rootdir+"DATA/O16-elastic-scattering-cross-section.txt",
                                                      rootdir+"DATA/O16-elastic-scattering-PDF.txt",
                                                      rootdir+"DATA/O16-elastic-scattering-CDF.txt");
     // create nuclides

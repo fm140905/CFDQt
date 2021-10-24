@@ -32,10 +32,12 @@ public:
     QVector3D dir; // unit vector
     bool escaped=false;
     double weight=1;
-    double ergE; // energy, Mev
+    double ergE; // energy, Mev for gamma, eV for neutron
     int scatterN=0;
 
     void move(const double length) {pos = pos + length * dir;}
+
+    void scatter(const double mu);
 };
 
 class Cell

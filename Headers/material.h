@@ -16,6 +16,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <utility>
 
 template< class T >
 const T& getClosestEntry(const double key, const std::map<double, T>& m)
@@ -56,21 +57,24 @@ private:
     // key = energy, val = PDF of N + 1 points corresponding to N equal-distributed mu bins
     // N = 100 => mu = -1.0, -0.98, ..., 0.98, 1.0
     std::map<double, std::vector<double>> DAPDF;
+    std::pair<int, int> DAPDFSize;
     // Inverse CDF of elastic scattering angular distribution, in CMS
     // key = energy, val = N + 1 points corresponding to N equal-probable bins
     // N = 100 => CDF = 0, 0.01, ..., 0.99, 1.0
     std::map<double, std::vector<double>> DAInverseCDF;
+    std::pair<int, int> DAInvCDFSize;
 
     // load files
-    bool loadCrossSection(std::string crossSectionFile, std::map<double, double> crossSectionTable);
+    bool loadCrossSection(std::string crossSectionFile, std::map<double, double>& crossSectionTable);
 
-    bool loadDAFile(std::string DAFile, std::map<double, std::vector<double>> DATable);
+    bool loadDAFile(std::string DAFile, std::map<double, std::vector<double>>& DATable);
     bool loadTotalCrossSection(std::string totalCrossSectionFile);
     bool loadElasticCrossSection(std::string elasticCrossSectionFile);
     bool loadDAPDFFile(std::string DAPDFFile);
     bool loadDAInverseCDFFile(std::string DAInverseCDFFile);
 
 public:
+    // NeutronCrossSection() = default;
     NeutronCrossSection(
                  std::string totalCrossSectionFile, 
                  std::string elasticCrossSectionFile)
@@ -91,8 +95,11 @@ public:
     int getTotalMicroScopicCrossSectionSize() const {return totalMicroscopicCrossSection.size();}
     const std::map<double, double>& getTotalMicroScopicCrossSection() const {return totalMicroscopicCrossSection;}
     double getElasticMicroScopicCrossSectionAt(double energy) const;
+    int getElasticMicroScopicCrossSectionSize() const {return elasticMicroscopicCrossSection.size();}
     double getDAPDFAt(double energy, double mu) const;
+    std::pair<int, int> getDAPDFSize() const {return DAPDFSize;}
     double getDAInvCDFAt(double energy, double probability) const;
+    std::pair<int, int> getDAInvCDFSize() const {return DAInvCDFSize;}
 };
 
 class PhotonCrossSection
@@ -112,6 +119,7 @@ private:
     double deltaE;
     int NEbin;
 public:
+    // PhotonCrossSection() = default;
     PhotonCrossSection(const std::string fpath);
     
     double getMaxE() const {return Emax;}
@@ -133,6 +141,7 @@ private:
     const NeutronCrossSection neutronCrossSection;
     const PhotonCrossSection photonCrossSection;
 public:
+    // Nuclide() = default;
     Nuclide(int z, double a, const NeutronCrossSection ncs, const PhotonCrossSection pcs)
         : atomicNumber(z), atomicWeight(a),
           neutronCrossSection(ncs),
@@ -152,11 +161,13 @@ private:
     double density; // g/cc
     double molecularMass;
     std::vector<std::pair<double, Nuclide>> compositions;
+    std::map<double, std::vector<double>> nuclideInvCDF;
     std::map<double, double> neutronTotalMacroscopicCrossSection; // cm^{-1}
     const PhotonCrossSection photonCrossSection;
     // std::map<double, double> photonTotalMacroscopicCrossSection; // cm^{-1}
 public:
     // constructor
+    // Material() = default;
     Material(const double d, const int id, const std::vector<std::pair<double, Nuclide>>& comp);
 
     double getDensity() const {return density;}
@@ -164,4 +175,7 @@ public:
     // double getPhotonTotalAtten(double energy) const {return getClosestEntry(energy, photonTotalMacroscopicCrossSection);}
     double getPhotonTotalAtten(double energy) const {return density * photonCrossSection.getAtten(energy);}
     const PhotonCrossSection& getPhotonCrossSection() const {return photonCrossSection;}
+    const std::vector<std::pair<double, Nuclide>>& getNuclides() const {return compositions;}
+    int getNuclidesNumber() const {return compositions.size();}
+    const Nuclide& selectInteractionTarget(const double energy, const double r) const;
 };

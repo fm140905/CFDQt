@@ -78,23 +78,71 @@ int ComptonScattering(Particle& particle, const MCSettings& config)
     // update particle energy
     particle.ergE /= eta; // energy of scattered photon
     // update particle direction
-    alpha = 2 * M_PI * QRandomGenerator::global()->generateDouble(); // angel phi
-    R1 = particle.dir.x();
-    R2 = particle.dir.y();
-    R3 = particle.dir.z();
-    double sinAng = std::sqrt(1 - cosAng * cosAng);
-    if (std::abs(std::abs(R3) - 1) > 1e-8)
+    particle.scatter(cosAng);
+    return 0;
+}
+
+
+bool deltaTrackingNeutron(Particle& particle, const MCSettings& config)
+{
+    // only one material
+    const double muMax = config.cells[0].material.getNeutronTotalAtten(particle.ergE); // cm^-1
+    while (!particle.escaped)
     {
-        eta = 1.0 / std::sqrt(1 - R3 * R3);
-        particle.dir.setX(cosAng * R1 + sinAng * (std::cos(alpha) * R3 * R1 - std::sin(alpha) * R2) * eta);
-        particle.dir.setY(cosAng * R2 + sinAng * (std::cos(alpha) * R3 * R2 + std::sin(alpha) * R1) * eta);
-        particle.dir.setZ(cosAng * R3 - sinAng * std::cos(alpha) / eta);
+        // randomly select a distance
+        double randReal = QRandomGenerator::global()->generateDouble();
+        double distance = - std::log(randReal) / muMax; // cm
+        particle.move(distance);
+        if(!config.ROI.contain(particle.pos))
+        {
+            // escaped
+            particle.escaped = true;
+            return false;
+        }
+
+        // virtual collision
+        // check if randReal < u(x,E) / u_max, which is always true for one material
+        return true;
+        // Neutron elastic scattering happens next
+    }
+    return false;
+}
+
+int neutronElasticScattering(Particle& particle, const MCSettings& config)
+{
+    const Cell& currentCell = config.cells[0];
+    // decide which nuclide the neutron will interacts with
+    double randReal = QRandomGenerator::global()->generateDouble();
+    const Nuclide& nuclide = currentCell.material.selectInteractionTarget(particle.ergE, randReal);
+    double A = nuclide.getAtomicWeight();
+    // update the wieght, w = w * P(interaction is Elastic scattering)
+    particle.weight *= nuclide.getNeutronCrossSection().getElasticMicroScopicCrossSectionAt(particle.ergE) 
+                        / nuclide.getNeutronCrossSection().getTotalMicroScopicCrossSectionAt(particle.ergE);
+    double E_lab;
+    double mu_lab;
+    // if nuclide is H-1, simple case
+    if (std::abs(A-1) < 0.1)
+    {
+        // isotopic in CMS
+        double mu_cms = 2 * QRandomGenerator::global()->generateDouble() - 1; // -1 < mu_cms < 1
+        mu_lab = std::sqrt((1+mu_cms) / 2);
+        E_lab = (1+mu_cms) / 2;
     }
     else
     {
-        particle.dir.setX(sinAng * std::cos(alpha));
-        particle.dir.setY(sinAng * std::sin(alpha));
-        particle.dir.setZ(cosAng * R3);
+        // sample a mu in CMS
+        double randReal = QRandomGenerator::global()->generateDouble();
+        double mu_cms = nuclide.getNeutronCrossSection().getDAInvCDFAt(particle.ergE, randReal);
+        double E_cms = std::pow(A/(1+A), 2);
+        // calculate the energy in lab system
+        E_lab = (1+A*A+2*A*mu_cms) / ((1+A) * (1+A));
+        // convert to lab system
+        mu_lab = mu_cms * std::sqrt(E_cms / E_lab) + 1 / (A+1) * std::sqrt(1/E_lab);
     }
+    // update particle energy
+    particle.ergE *= E_lab;
+    // update particle's moving direction
+    particle.scatter(mu_lab);
+
     return 0;
 }
