@@ -5,7 +5,7 @@ TEST(MaterialTest, constructor)
 {
     // initialize material
     const double waterDensity = 0.99; // g cm^-3
-    const Material water = Material("/media/ming/DATA/projects/2021_DTRA/waterCylinder/DATA/H2O.csv", waterDensity, 18);
+    const Material water = Material("/media/ming/DATA/projects/2021_DTRA/cfdGamma/DATA/H2O.csv", waterDensity, 18);
 
     EXPECT_DOUBLE_EQ(water.getDensity(), waterDensity);
     EXPECT_DOUBLE_EQ(water.getBinWidth(), 0.01);

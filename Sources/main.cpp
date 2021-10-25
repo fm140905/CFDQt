@@ -22,7 +22,7 @@ int main(int argc, char** argv)
     const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
     // initialize material
     const double waterDensity = 0.99; // g cm^-3
-    const Material water = Material("/media/ming/DATA/projects/2021_DTRA/waterCylinder/DATA/H2O.csv", waterDensity, 18);
+    const Material water = Material("/media/ming/DATA/projects/2021_DTRA/cfdGamma/DATA/H2O.csv", waterDensity, 18);
     // initialize cell
     const Cell waterCell = Cell(water, waterDensity, waterCylinder);
     // initialize source

@@ -24,12 +24,12 @@ int primaryContribution(const Particle& particle, const MCSettings& config, Tall
     if (d >= tally.getRadius())
         return 0;
 
-    // // F1 tally
-    // double score = 1;
+    // F1 tally
+    double score = 1;
     // // F2 tally
     // double score = 1 / (tally.getArea() * std::sqrt(1-std::pow(d / tally.getRadius(), 2.0)));
-    // F4 tally
-    double score = 2 * std::sqrt(std::pow(tally.getRadius(), 2.0) - std::pow(d, 2.0)) / tally.getVolume();
+    // // F4 tally
+    // double score = 2 * std::sqrt(std::pow(tally.getRadius(), 2.0) - std::pow(d, 2.0)) / tally.getVolume();
     
     
     // attenuation along the ray
@@ -69,13 +69,13 @@ int scatterContribution(Particle particle, const MCSettings& config, Tally& tall
     double ratio = tally.getRadius() / length;
 
 
-    // // contribution to tally F1
-    // double score = 2 * sigma * (1-std::sqrt(1-ratio*ratio));
+    // contribution to tally F1
+    double score = 2 * sigma * (1-std::sqrt(1-ratio*ratio));
     // // contribution to tally F2, integrated over the spherical surface
     // double score = 1 / tally.getArea() * sigma * ratio * std::log((1+ratio) / (1-ratio));
-    // contribution to tally F4
-    double avgTrackLength = 4*tally.getRadius()/3.0;
-    double score = 2 * sigma * (1-std::sqrt(1-ratio*ratio)) * avgTrackLength / tally.getVolume();
+    // // contribution to tally F4
+    // double avgTrackLength = 4*tally.getRadius()/3.0;
+    // double score = 2 * sigma * (1-std::sqrt(1-ratio*ratio)) * avgTrackLength / tally.getVolume();
 
     particle.ergE *= beta;
     tally.Fill(particle, std::exp(-atten)* score);
