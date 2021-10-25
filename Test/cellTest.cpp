@@ -53,16 +53,39 @@ TEST(CellTest, contain)
     EXPECT_FALSE(waterCell.contains(prtl));
 }
 
-TEST(SourceTest, createParticle)
+TEST(SourceTest, createMonoenergeticParticle)
 {
     // initialize source
-    Histogram gammaCDF = Histogram(1, 0, 0.661*2);
-    gammaCDF.setBinContents(std::vector<double>{1});
+    std::vector<double> srcEnergyCDF{0.661}; // eV for neutron, MeV for gamma
     const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
-    const Source gammaSource = Source(sourceCylinder, gammaCDF);
+    const Source source = Source(sourceCylinder, srcEnergyCDF);
 
-    Particle prtl = gammaSource.createParticle();
+    Particle prtl = source.createParticle();
     EXPECT_DOUBLE_EQ(prtl.ergE, 0.661);
     EXPECT_TRUE(sourceCylinder.contain(prtl.pos));
     EXPECT_DOUBLE_EQ(prtl.dir.length(), 1.0);
+}
+
+TEST(SourceTest, createDistributedParticle)
+{
+    // initialize source
+    std::vector<double> srcEnergyCDF{0, 0.478702, 0.817756, 1.15082,
+                                    1.50133,1.88769,2.33337,2.87784,
+                                    3.60501,4.77086,10.0}; // eV for neutron, MeV for gamma
+    const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
+    const Source source = Source(sourceCylinder, srcEnergyCDF);
+
+    std::ofstream fileptr;
+    std::string fpath = "energy_list.txt";
+    fileptr.open(fpath, std::ios::out);
+    if (!fileptr.is_open())
+    {
+        std::string errMessage = "can't open file: " + fpath;
+        throw std::runtime_error(errMessage);
+    }
+    for (std::size_t i = 0; i < 100000; i++)
+    {
+        fileptr << source.createParticle().ergE << '\n';
+    }
+    fileptr.close();
 }

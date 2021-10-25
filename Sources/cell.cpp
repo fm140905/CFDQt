@@ -21,14 +21,21 @@ Particle Source::createParticle() const
     QVector3D initDir = QVector3D(sintheta * qCos(phi), sintheta * qSin(phi), costheta);
 
     double initE = 0;
-    a = QRandomGenerator::global()->generateDouble();
-    for (std::size_t i = 0; i < energyCDF.getNBins(); i++)
+    // monoenergetic
+    if (invCDF.size() == 1)
     {
-        if( a < energyCDF.getBinContent(i))
-        {
-            initE = energyCDF.getBinCenter(i);
-            break;
-        }
+        initE = invCDF[0];
+    }
+    else
+    {
+        a = QRandomGenerator::global()->generateDouble();
+        double idx = std::floor(a / CDFBinWidth);
+        // linear interpolation
+        double xl = idx * CDFBinWidth;
+        double xr = xl + CDFBinWidth;
+        double yl = invCDF[static_cast<int>(idx)];
+        double yr = invCDF[static_cast<int>(idx) + 1];
+        initE = (yl * (xr - a) + yr * (a - xl)) / CDFBinWidth;
     }
     return Particle(initPos, initDir, initE, 1.0);
 }

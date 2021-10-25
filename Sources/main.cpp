@@ -39,21 +39,23 @@ int main(int argc, char** argv)
     // initialize cell
     const Cell waterCell = Cell(water, waterDensity, waterCylinder);
     // initialize source
-    Histogram srcEnergyCDF = Histogram(1, 0, 999999*2); // eV for neutron, MeV for gamma
-    srcEnergyCDF.setBinContents(std::vector<double>{1});
-    const Source gammaSource = Source(sourceCylinder, srcEnergyCDF);
+    // std::vector<double> srcEnergyCDF{4999999}; // eV for neutron, MeV for gamma
+    std::vector<double> srcEnergyCDF{0, 478702, 817756, 1.15082e6,
+                                    1.50133e6,1.88769e6,2.33337e6,2.87784e6,
+                                    3.60501e6,4.77086e6,1e7}; // eV for neutron, MeV for gamma
+    const Source source = Source(sourceCylinder, srcEnergyCDF);
     // initialize settings
     const int maxN = 100000;
     const double maxScatterN = 100;
-    const double minE = 1;  // eV for neutron, MeV for gamma
+    const double minE = 1e-4;  // eV for neutron, MeV for gamma
     const double minW = 0.01;
-    const MCSettings config = MCSettings(waterCylinder, std::vector<Cell>{waterCell}, gammaSource, maxN, maxScatterN, minW, minE);
+    const MCSettings config = MCSettings(waterCylinder, std::vector<Cell>{waterCell}, source, maxN, maxScatterN, minW, minE);
     // initialize tally F2
     const Sphere detector = Sphere(QVector3D(75, 75, 10), 2.54);
     // // linear
     // Tally tally = Tally(detector, 100, 1e-4, 1e6);
     // lethargy
-    Tally tally = Tally(detector, 110, 1e-4, 1e7, true);
+    Tally tally = Tally(detector, 110, 1e-3, 1e8, true);
 
     // Tally energy = Tally(detector, 100, 0, 1e6);
 

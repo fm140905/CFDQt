@@ -60,10 +60,19 @@ class Source
 {
 private:
     const Cylinder cylinder;
-    const Histogram energyCDF;
+    // const Histogram energyCDF;
+    const std::vector<double> invCDF;
+    double CDFBinWidth;
 public:
-    Source(const Cylinder& cyl, const Histogram& ergCDF)
-        : cylinder(cyl), energyCDF(ergCDF) {}
+    Source(const Cylinder& cyl, const std::vector<double>& ergCDF)
+        : cylinder(cyl), invCDF(ergCDF) 
+        {
+            if (invCDF.size() > 1)
+            {
+                // N euqal-probable bins
+                CDFBinWidth = 1.0 / (invCDF.size() - 1);
+            }
+        }
     // ~Source();
 
     Particle createParticle() const;
