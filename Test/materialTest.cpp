@@ -9,7 +9,9 @@ public:
     NeutronCrossSection* O16NeutronCrossSection;
     void SetUp() override
     {
-        std::string rootdir = "/home/mingf2/projects/2021_DTRA/";
+        // std::string rootdir = "/home/mingf2/projects/2021_DTRA/";
+        // std::string rootdir = "/media/ming/DATA/projects/2021_DTRA/cfdneutron/";
+    std::string rootdir = getRootDir();
         H1NeutronCrossSection = new NeutronCrossSection(rootdir+"DATA/H1-total-cross-section.txt",
                                                     rootdir+"DATA/H1-elastic-scattering-cross-section.txt");
         O16NeutronCrossSection = new NeutronCrossSection(rootdir+"DATA/O16-total-cross-section.txt",
@@ -123,7 +125,9 @@ public:
     Material* water;
     void SetUp() override
     {
-        std::string rootdir = "/home/mingf2/projects/2021_DTRA/";
+        // std::string rootdir = "/home/mingf2/projects/2021_DTRA/";
+        // std::string rootdir = "/media/ming/DATA/projects/2021_DTRA/cfdneutron/";
+    std::string rootdir = getRootDir();
         // load cross-section tables
         const PhotonCrossSection photonCrossSection(rootdir+"DATA/H2O.csv");
         const NeutronCrossSection H1NeutronCrossSection(rootdir+"DATA/H1-total-cross-section.txt",
