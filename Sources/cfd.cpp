@@ -111,12 +111,12 @@ int primaryContributionNeutron(const Particle& particle, const MCSettings& confi
     if (d >= tally.getRadius())
         return 0;
 
-    // // F1 tally
-    // double score = 1;
+    // F1 tally
+    double score = 1;
     // // F2 tally
     // double score = 1 / (tally.getArea() * std::sqrt(1-std::pow(d / tally.getRadius(), 2.0)));
-    // F4 tally
-    double score = 2 * std::sqrt(std::pow(tally.getRadius(), 2.0) - std::pow(d, 2.0)) / tally.getVolume();
+    // // F4 tally
+    // double score = 2 * std::sqrt(std::pow(tally.getRadius(), 2.0) - std::pow(d, 2.0)) / tally.getVolume();
     
     
     // attenuation along the ray
@@ -143,10 +143,18 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
 
     const double ratio = tally.getRadius() / length;
 
-    // average track length per unit volume integrated over the solid angle subtended by detector = 2pi * averageF4,
+    // average F1 integrated over the solid angle subtended by detector = 2pi * averageScore,
     // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
-    const double averageF4 = length / tally.getVolume() * 
-                        (ratio - 0.5 * (1-ratio*ratio) * std::log((1+ratio)/(1-ratio)));
+    const double averageScore = 1 - std::sqrt(1 - ratio * ratio);
+
+    // average F2 integrated over the solid angle subtended by detector = 2pi * averageScore,
+    // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
+    // const double averageScore = 0.5 * ratio * std::log((1+ratio)/(1-ratio));
+
+    // // average F4 integrated over the solid angle subtended by detector = 2pi * averageScore,
+    // // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
+    // const double averageScore = length / tally.getVolume() * 
+    //                     (ratio - 0.5 * (1-ratio*ratio) * std::log((1+ratio)/(1-ratio)));
 
     // iterate all nuclides that the neutron can interact with
     const int nuclidesNum = config.cells[0].material.getNuclidesNumber();
@@ -213,7 +221,7 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
         // probablity that neutron can reach detector without being attenuated
         unattenProbs[nuclideIdx] = std::exp(-attenLength * config.cells[0].material.getNeutronTotalAtten(E_lab));
         // F4 tally, PDF(u_cm) * du_cm / du_lab * average constribution integrated over detector sphere
-        scores[nuclideIdx] = pdf * dmu_cm_over_du_lab * averageF4;
+        scores[nuclideIdx] = pdf * dmu_cm_over_du_lab * averageScore;
         nuclideIdx ++;
     }
 

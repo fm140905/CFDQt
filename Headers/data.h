@@ -14,6 +14,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 
 class Histogram
 {
@@ -56,3 +57,5 @@ private:
     std::vector<double> binCounts;
     int totalCounts;
 };
+
+std::string getRootDir();

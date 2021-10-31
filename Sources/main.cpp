@@ -16,7 +16,9 @@ int main(int argc, char** argv)
     if (stat("output", &st) == -1) {
         mkdir("output", 0700);
     }
-    std::string rootdir = "/home/mingf2/projects/2021_DTRA/";
+    // std::string rootdir = "/home/mingf2/projects/2021_DTRA/";
+    // std::string rootdir = "/media/ming/DATA/projects/2021_DTRA/cfdneutron/";
+    std::string rootdir = getRootDir();
     // initialize gemoetry
     const Cylinder waterCylinder = Cylinder(QVector3D(25, 25, 0), 52, 5);
     const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);

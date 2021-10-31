@@ -73,3 +73,15 @@ void Histogram::rebin(const int nbins_, const double lower_, const double upper_
         binCenters[i] = binCenters[i-1]+binwidth;
     }
 }
+
+std::string getRootDir()
+{
+    std::string cwd = std::filesystem::current_path();
+    std::size_t found = cwd.rfind("/build");
+    if (found!=std::string::npos)
+        cwd.replace (found, std::string::npos,"/");
+    else
+        throw std::runtime_error("Projetc root directory not found.");
+    // std::cout << cwd << std::endl;
+    return cwd;
+}
