@@ -300,7 +300,7 @@ int scatterContributionThermalNeutron(Particle particle, const MCSettings& confi
         const Nuclide& nuclide = comp.second;
         const double A = nuclide.getAtomicWeight();
         double a = std::sqrt(A * particle.ergE / kT);
-        double normalization_const = 25 / ((1+0.5/(a*a))*std::erf(a) + std::exp(-a*a) / (a*2)*M_2_SQRTPI);
+        double normalization_const = 2 / ((1+0.5/(a*a))*std::erf(a) + std::exp(-a*a) / (a*2)*M_2_SQRTPI);
         // probability that neutron scatters by nuclide i 
         double scatterProbNuclidei = comp.first * 
                 nuclide.getNeutronCrossSection().getElasticMicroScopicCrossSectionAt(particle.ergE);
@@ -310,7 +310,7 @@ int scatterContributionThermalNeutron(Particle particle, const MCSettings& confi
             E_lab = thermalErgBins[i].first;
             epsilon_squared = 2 * (particle.ergE + E_lab - 2*cosAng*std::sqrt(particle.ergE*E_lab));
             double M_2kTe2 = A/(2*kT*epsilon_squared);
-            dpEbin = normalization_const * 0.25 * M_1_PI * std::sqrt(E_lab / particle.ergE) * std::sqrt(M_2kTe2/M_PI) * std::exp(-M_2kTe2 * std::pow(E_lab - particle.ergE + epsilon_squared / (2*A), 2)) * thermalErgBins[i].second;
+            dpEbin = normalization_const * std::sqrt(E_lab / particle.ergE) * std::sqrt(M_2kTe2/M_PI) * std::exp(-M_2kTe2 * std::pow(E_lab - particle.ergE + epsilon_squared / (2*A), 2)) * thermalErgBins[i].second;
 
             // energy of scattered neutron in lab system
             E_labs.push_back(E_lab);
