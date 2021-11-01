@@ -38,6 +38,8 @@ public:
     
     void Fill(const Particle& particle, const double prob=1)
     {
+        if (isnan(prob))
+            return;
         if (letharg)
             hist.fill(std::log10(particle.ergE), particle.weight * prob);
         else

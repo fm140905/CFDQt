@@ -130,9 +130,15 @@ int primaryContributionNeutron(const Particle& particle, const MCSettings& confi
 
 int scatterContributionNeutron(Particle particle, const MCSettings& config, Tally& tally)
 {
-    if (particle.ergE < 0.1)
+    if (particle.ergE < 1)
     {
-        scatterContributionThermalNeutron(particle, config, tally);
+        if (QRandomGenerator::global()->generateDouble() < 0.01)
+        {
+            // to reduce computation time, we do cfd for 1e4 thermal neutrons, which corresponds to 1% thermal neutrons if nps is 1e6
+            scatterContributionThermalNeutron(particle, config, tally);
+        }
+        
+        return 0;
     }
         
     // determine the scattering angle if the particle
@@ -293,6 +299,8 @@ int scatterContributionThermalNeutron(Particle particle, const MCSettings& confi
     {
         const Nuclide& nuclide = comp.second;
         const double A = nuclide.getAtomicWeight();
+        double a = std::sqrt(A * particle.ergE / kT);
+        double normalization_const = 25 / ((1+0.5/(a*a))*std::erf(a) + std::exp(-a*a) / (a*2)*M_2_SQRTPI);
         // probability that neutron scatters by nuclide i 
         double scatterProbNuclidei = comp.first * 
                 nuclide.getNeutronCrossSection().getElasticMicroScopicCrossSectionAt(particle.ergE);
@@ -302,7 +310,7 @@ int scatterContributionThermalNeutron(Particle particle, const MCSettings& confi
             E_lab = thermalErgBins[i].first;
             epsilon_squared = 2 * (particle.ergE + E_lab - 2*cosAng*std::sqrt(particle.ergE*E_lab));
             double M_2kTe2 = A/(2*kT*epsilon_squared);
-            dpEbin = 0.5 * std::sqrt(E_lab / particle.ergE) * std::sqrt(M_2kTe2/M_PI) * std::exp(-M_2kTe2 * std::pow(E_lab - particle.ergE + epsilon_squared / (2*A), 2)) * thermalErgBins[i].second;
+            dpEbin = normalization_const * 0.25 * M_1_PI * std::sqrt(E_lab / particle.ergE) * std::sqrt(M_2kTe2/M_PI) * std::exp(-M_2kTe2 * std::pow(E_lab - particle.ergE + epsilon_squared / (2*A), 2)) * thermalErgBins[i].second;
 
             // energy of scattered neutron in lab system
             E_labs.push_back(E_lab);
@@ -319,7 +327,8 @@ int scatterContributionThermalNeutron(Particle particle, const MCSettings& confi
     for (int i = 0; i < scatterNuclideProbs.size(); i++)
     {
         particle.ergE = E_labs[i];
-        tally.Fill(particle, scatterNuclideProbs[i] / totalTotalCrossSection * unattenProbs[i] * scores[i]);
+        // 100 is added because we only considered 1% thermal neutrons
+        tally.Fill(particle, scatterNuclideProbs[i] / totalTotalCrossSection * unattenProbs[i] * scores[i]*100);
     }
     return 0;
 }

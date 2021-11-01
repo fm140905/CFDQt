@@ -65,10 +65,10 @@ int main(int argc, char** argv)
     auto startTime = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < config.maxN; i++)
     {
-        if(i % 1000 == 0)
-        {
-            std::cout << i << '\n';
-        }
+        // if(i % 1000 == 0)
+        // {
+        //     std::cout << i << '\n';
+        // }
         // create a new particle from source
         Particle prtl = config.source.createParticle();
         assert(config.ROI.contain(prtl.pos));

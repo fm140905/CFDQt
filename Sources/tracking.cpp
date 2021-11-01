@@ -120,7 +120,7 @@ int neutronElasticScattering(Particle& particle, const MCSettings& config)
                         / nuclide.getNeutronCrossSection().getTotalMicroScopicCrossSectionAt(particle.ergE);
     double E_lab;
     double mu_lab;
-    if (particle.ergE > 0.1) // threshold =  1eV
+    if (particle.ergE > 1) // threshold =  1eV
     {
         // fast
         // if nuclide is H-1, simple case
@@ -173,7 +173,7 @@ int thermalNeutronElasticScatterSampling(const double A, const double E_0, doubl
     const double h = a * std::exp(-a*a);
     double p, q;
     static NormalRandNumGenerator normalRangGen(0, M_SQRT1_2);
-    if (QRandomGenerator::global()->generateDouble() * (g+h) < (g-h))
+    if (QRandomGenerator::global()->generateDouble() * (g+h) > (g-h))
     {
         // select q with Method Q1
         q = std::sqrt(a*a-std::log(QRandomGenerator::global()->generateDouble()));
@@ -214,7 +214,7 @@ int thermalNeutronElasticScatterSampling(const double A, const double E_0, doubl
         {
             // sample from a normal distribution with mean = 0, stddev = 1/sqrt(2)
             double R = normalRangGen.genRandNumber();
-            if (std::abs(R) > a && 
+            if (std::abs(R) < a && 
                 QRandomGenerator::global()->generateDouble() <= std::pow((R+a)/(2*a), 2))
             {
                 // yes
