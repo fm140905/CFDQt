@@ -35,6 +35,7 @@ public:
     std::vector<double> getBinCenters() const;
     std::vector<double> getBinContents() const;
     int getTotalCounts() const;
+    double getBinWidth() const {return binwidth;}
 
     // setters
     void setBinContents(const std::vector<double> counts);

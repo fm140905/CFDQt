@@ -47,7 +47,7 @@ int main(int argc, char** argv)
                                     3.60501e6,4.77086e6,1e7}; // eV for neutron, MeV for gamma
     const Source source = Source(sourceCylinder, srcEnergyCDF);
     // initialize settings
-    const int maxN = 100000;
+    const int maxN = 1000000;
     const double maxScatterN = 100;
     const double minE = 1e-4;  // eV for neutron, MeV for gamma
     const double minW = 0.01;
@@ -65,6 +65,10 @@ int main(int argc, char** argv)
     auto startTime = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < config.maxN; i++)
     {
+        if(i % 1000 == 0)
+        {
+            std::cout << i << '\n';
+        }
         // create a new particle from source
         Particle prtl = config.source.createParticle();
         assert(config.ROI.contain(prtl.pos));

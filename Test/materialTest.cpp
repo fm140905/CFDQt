@@ -127,7 +127,7 @@ public:
     {
         // std::string rootdir = "/home/mingf2/projects/2021_DTRA/";
         // std::string rootdir = "/media/ming/DATA/projects/2021_DTRA/cfdneutron/";
-    std::string rootdir = getRootDir();
+        std::string rootdir = getRootDir();
         // load cross-section tables
         const PhotonCrossSection photonCrossSection(rootdir+"DATA/H2O.csv");
         const NeutronCrossSection H1NeutronCrossSection(rootdir+"DATA/H1-total-cross-section.txt",

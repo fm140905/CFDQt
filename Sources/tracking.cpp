@@ -120,29 +120,124 @@ int neutronElasticScattering(Particle& particle, const MCSettings& config)
                         / nuclide.getNeutronCrossSection().getTotalMicroScopicCrossSectionAt(particle.ergE);
     double E_lab;
     double mu_lab;
-    // if nuclide is H-1, simple case
-    if (std::abs(A-1) < 0.1)
+    if (particle.ergE > 0.1) // threshold =  1eV
     {
-        // isotopic in CMS
-        double mu_cms = 2 * QRandomGenerator::global()->generateDouble() - 1; // -1 < mu_cms < 1
-        mu_lab = std::sqrt((1+mu_cms) / 2);
-        E_lab = (1+mu_cms) / 2;
+        // fast
+        // if nuclide is H-1, simple case
+        if (std::abs(A-1) < 0.1)
+        {
+            // isotopic in CMS
+            double mu_cms = 2 * QRandomGenerator::global()->generateDouble() - 1; // -1 < mu_cms < 1
+            mu_lab = std::sqrt((1+mu_cms) / 2);
+            E_lab = (1+mu_cms) / 2;
+        }
+        else
+        {
+            // sample a mu in CMS
+            double randReal = QRandomGenerator::global()->generateDouble();
+            double mu_cms = nuclide.getNeutronCrossSection().getDAInvCDFAt(particle.ergE, randReal);
+            double E_cms = std::pow(A/(1+A), 2);
+            // calculate the energy in lab system
+            E_lab = (1+A*A+2*A*mu_cms) / ((1+A) * (1+A));
+            // convert to lab system
+            mu_lab = mu_cms * std::sqrt(E_cms / E_lab) + 1 / (A+1) * std::sqrt(1/E_lab);
+        }
     }
     else
     {
-        // sample a mu in CMS
-        double randReal = QRandomGenerator::global()->generateDouble();
-        double mu_cms = nuclide.getNeutronCrossSection().getDAInvCDFAt(particle.ergE, randReal);
-        double E_cms = std::pow(A/(1+A), 2);
-        // calculate the energy in lab system
-        E_lab = (1+A*A+2*A*mu_cms) / ((1+A) * (1+A));
-        // convert to lab system
-        mu_lab = mu_cms * std::sqrt(E_cms / E_lab) + 1 / (A+1) * std::sqrt(1/E_lab);
+        // thermal, free-gas model
+        thermalNeutronElasticScatterSampling(A, particle.ergE, E_lab, mu_lab);
     }
+    
     // update particle energy
     particle.ergE *= E_lab;
     // update particle's moving direction
     particle.scatter(mu_lab);
 
+    return 0;
+}
+
+// int fastNeutronElasticScatterSampling(const double A, double& E_lab, double& mu_lab)
+// {
+    
+// }
+int thermalNeutronElasticScatterSampling(const double A, const double E_0, double& E_lab, double& mu_lab)
+{
+    // References:
+    // [1] Monte Carlo Particle Transport Methods: Neutron and Photon Calculations, p72
+    // [2] SELECTING THE ENERGY AND SCATTERING ANGLE OF THERMAL NEUTRONS IN FREE GAS MODEL
+    const double kT = 0.0253; // room temperature, in eV
+    const double lambda = 1/A;
+    const double a = std::sqrt(E_0 / (lambda * kT));
+    const double g = 1.0 / M_2_SQRTPI * (2*a*a + 1) * std::erf(a);
+    const double h = a * std::exp(-a*a);
+    double p, q;
+    static NormalRandNumGenerator normalRangGen(0, M_SQRT1_2);
+    if (QRandomGenerator::global()->generateDouble() * (g+h) < (g-h))
+    {
+        // select q with Method Q1
+        q = std::sqrt(a*a-std::log(QRandomGenerator::global()->generateDouble()));
+        // select p with Method P1
+        double z;
+        if (QRandomGenerator::global()->generateDouble() < a / q)
+        {
+            // yes
+            double R4 = QRandomGenerator::global()->generateDouble();
+            double R5 = QRandomGenerator::global()->generateDouble();
+            z = std::max(R4, R5);
+        }
+        else
+        {
+            z = QRandomGenerator::global()->generateDouble();
+        }
+        p = 2 * (2*z+q/a-1) / (lambda + 1);
+        
+    }
+    else
+    {
+        // select q with Method Q2
+        bool flag=false;
+        if (a < 0.71)
+        {
+            // yes
+            double R1 =  QRandomGenerator::global()->generateDouble();
+            double R2 =  QRandomGenerator::global()->generateDouble();
+            double R3 =  QRandomGenerator::global()->generateDouble();
+            double x = std::max(std::max(R1, R2), R3);
+            if (QRandomGenerator::global()->generateDouble() < std::exp(-std::pow(a*(2*x-1), 2.0)))
+            {
+                flag = true;
+                q = a * (2 * x - 1);
+            }
+        }
+        while(!flag)
+        {
+            // sample from a normal distribution with mean = 0, stddev = 1/sqrt(2)
+            double R = normalRangGen.genRandNumber();
+            if (std::abs(R) > a && 
+                QRandomGenerator::global()->generateDouble() <= std::pow((R+a)/(2*a), 2))
+            {
+                // yes
+                flag = true;
+                q = R;
+            }
+        }
+        // select p with Method P2
+        double R4 = QRandomGenerator::global()->generateDouble();
+        double R5 = QRandomGenerator::global()->generateDouble();
+        double z = std::max(R4, R5);
+        p = 2*z*(q+a) / (a*(lambda+1));
+    }
+    E_lab = 2 * p * q / a - lambda * p * p + 1;
+    mu_lab = (1+E_lab - p*p) / (2 * std::sqrt(E_lab));
+    if (std::abs(mu_lab) > 1)
+    {
+        mu_lab = 0.99999999999;
+    }
+    if(std::abs(mu_lab) < -1)
+    {
+        mu_lab = -0.9999999999;
+    }
+    
     return 0;
 }

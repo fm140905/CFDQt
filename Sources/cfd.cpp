@@ -111,12 +111,12 @@ int primaryContributionNeutron(const Particle& particle, const MCSettings& confi
     if (d >= tally.getRadius())
         return 0;
 
-    // F1 tally
-    double score = 1;
+    // // F1 tally
+    // double score = 1;
     // // F2 tally
     // double score = 1 / (tally.getArea() * std::sqrt(1-std::pow(d / tally.getRadius(), 2.0)));
-    // // F4 tally
-    // double score = 2 * std::sqrt(std::pow(tally.getRadius(), 2.0) - std::pow(d, 2.0)) / tally.getVolume();
+    // F4 tally
+    double score = 2 * std::sqrt(std::pow(tally.getRadius(), 2.0) - std::pow(d, 2.0)) / tally.getVolume();
     
     
     // attenuation along the ray
@@ -130,6 +130,11 @@ int primaryContributionNeutron(const Particle& particle, const MCSettings& confi
 
 int scatterContributionNeutron(Particle particle, const MCSettings& config, Tally& tally)
 {
+    if (particle.ergE < 0.1)
+    {
+        scatterContributionThermalNeutron(particle, config, tally);
+    }
+        
     // determine the scattering angle if the particle
     // were scattered towards the detector
     QVector3D prtl2det = tally.getCenter() - particle.pos;
@@ -143,18 +148,18 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
 
     const double ratio = tally.getRadius() / length;
 
-    // average F1 integrated over the solid angle subtended by detector = 2pi * averageScore,
-    // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
-    const double averageScore = 1 - std::sqrt(1 - ratio * ratio);
+    // // average F1 integrated over the solid angle subtended by detector = 2pi * averageScore,
+    // // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
+    // const double averageScore = 1 - std::sqrt(1 - ratio * ratio);
 
     // average F2 integrated over the solid angle subtended by detector = 2pi * averageScore,
     // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
     // const double averageScore = 0.5 * ratio * std::log((1+ratio)/(1-ratio));
 
-    // // average F4 integrated over the solid angle subtended by detector = 2pi * averageScore,
-    // // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
-    // const double averageScore = length / tally.getVolume() * 
-    //                     (ratio - 0.5 * (1-ratio*ratio) * std::log((1+ratio)/(1-ratio)));
+    // average F4 integrated over the solid angle subtended by detector = 2pi * averageScore,
+    // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
+    const double averageScore = length / tally.getVolume() * 
+                        (ratio - 0.5 * (1-ratio*ratio) * std::log((1+ratio)/(1-ratio)));
 
     // iterate all nuclides that the neutron can interact with
     const int nuclidesNum = config.cells[0].material.getNuclidesNumber();
@@ -162,7 +167,7 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
     std::vector<double> unattenProbs(nuclidesNum, 0);
     std::vector<double> scores(nuclidesNum, 0);
     std::vector<double> E_labs(nuclidesNum, 0);
-    int nuclideIdx(0);
+    int nuclideIdx(-1);
     double E_cms(0);
     double E_lab(0);
     double mu_cms(0);
@@ -170,6 +175,7 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
     double dmu_cm_over_du_lab(0);
     for (auto &&comp : config.cells[0].material.getNuclides())
     {
+        nuclideIdx ++;
         const Nuclide& nuclide = comp.second;
         const double A = nuclide.getAtomicWeight();
         // special case, H-1
@@ -177,7 +183,6 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
         {
             if(cosAng < 0)
             {
-                nuclideIdx ++;
                 continue; // back-scatter is not possible
             }
             // E_cms = 0.25;
@@ -222,13 +227,96 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
         unattenProbs[nuclideIdx] = std::exp(-attenLength * config.cells[0].material.getNeutronTotalAtten(E_lab));
         // F4 tally, PDF(u_cm) * du_cm / du_lab * average constribution integrated over detector sphere
         scores[nuclideIdx] = pdf * dmu_cm_over_du_lab * averageScore;
-        nuclideIdx ++;
     }
 
     // for normalizing probablities of scattering with each nuclide
     // double totalElasticCrossSection = std::accumulate(scatterNuclideProbs.begin(), scatterNuclideProbs.end(), 0);
     double totalTotalCrossSection = config.cells[0].material.getNeutronTotalMicroscopicCrossSection(particle.ergE);
     for (int i = 0; i < nuclidesNum; i++)
+    {
+        particle.ergE = E_labs[i];
+        tally.Fill(particle, scatterNuclideProbs[i] / totalTotalCrossSection * unattenProbs[i] * scores[i]);
+    }
+    return 0;
+}
+
+int scatterContributionThermalNeutron(Particle particle, const MCSettings& config, Tally& tally)
+{
+    // determine the scattering angle if the particle
+    // were scattered towards the detector
+    QVector3D prtl2det = tally.getCenter() - particle.pos;
+    const double length = prtl2det.length();
+    prtl2det.normalize();
+    const double cosAng = QVector3D::dotProduct(particle.dir, prtl2det); // mu_lab
+    
+    // attenuation along the ray
+    Ray ray = Ray(particle.pos, prtl2det);
+    const double attenLength = config.ROI.intersection(ray);
+
+    const double ratio = tally.getRadius() / length;
+
+    // // average F1 integrated over the solid angle subtended by detector = 2pi * averageScore,
+    // // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
+    // const double averageScore = 1 - std::sqrt(1 - ratio * ratio);
+
+    // average F2 integrated over the solid angle subtended by detector = 2pi * averageScore,
+    // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
+    // const double averageScore = 0.5 * ratio * std::log((1+ratio)/(1-ratio));
+
+    // average F4 integrated over the solid angle subtended by detector = 2pi * averageScore,
+    // the factor 2pi cancels out with the factor 1/2pi in pdf of angular distribution
+    const double averageScore = length / tally.getVolume() * 
+                        (ratio - 0.5 * (1-ratio*ratio) * std::log((1+ratio)/(1-ratio)));
+
+    // iterate all nuclides and all thermal erg bins
+    std::vector<double> scatterNuclideProbs;
+    std::vector<double> unattenProbs;
+    std::vector<double> scores;
+    std::vector<double> E_labs;
+    static const double kT = 0.0253; // eV, 293.6K
+    static std::vector<std::pair<double, double>> thermalErgBins; // bin center, width
+    if (thermalErgBins.size() == 0)
+    {
+        for (int i = 0; i < tally.getNBins(); i++)
+        {
+            if (tally.getBinCenter(i) < 1)
+            {
+                thermalErgBins.push_back({tally.getBinCenter(i), tally.getBinWidth(i)});
+            }
+        }
+    }
+
+    double epsilon_squared(0);
+    double E_lab(0);
+    double dpEbin(0);
+    for (auto &&comp : config.cells[0].material.getNuclides())
+    {
+        const Nuclide& nuclide = comp.second;
+        const double A = nuclide.getAtomicWeight();
+        // probability that neutron scatters by nuclide i 
+        double scatterProbNuclidei = comp.first * 
+                nuclide.getNeutronCrossSection().getElasticMicroScopicCrossSectionAt(particle.ergE);
+        // iterate over thermal erg bins
+        for (int i = 0; i < thermalErgBins.size(); i++)
+        {
+            E_lab = thermalErgBins[i].first;
+            epsilon_squared = 2 * (particle.ergE + E_lab - 2*cosAng*std::sqrt(particle.ergE*E_lab));
+            double M_2kTe2 = A/(2*kT*epsilon_squared);
+            dpEbin = 0.5 * std::sqrt(E_lab / particle.ergE) * std::sqrt(M_2kTe2/M_PI) * std::exp(-M_2kTe2 * std::pow(E_lab - particle.ergE + epsilon_squared / (2*A), 2)) * thermalErgBins[i].second;
+
+            // energy of scattered neutron in lab system
+            E_labs.push_back(E_lab);
+            scatterNuclideProbs.push_back(scatterProbNuclidei);
+            // probablity that neutron can reach detector without being attenuated
+            unattenProbs.push_back(std::exp(-attenLength * config.cells[0].material.getNeutronTotalAtten(E_lab)));
+            // F4 tally, dpEbin * average constribution integrated over detector sphere
+            scores.push_back(dpEbin * averageScore);
+        }
+    }
+
+    // for normalizing probablities of scattering with each nuclide
+    double totalTotalCrossSection = config.cells[0].material.getNeutronTotalMicroscopicCrossSection(particle.ergE);
+    for (int i = 0; i < scatterNuclideProbs.size(); i++)
     {
         particle.ergE = E_labs[i];
         tally.Fill(particle, scatterNuclideProbs[i] / totalTotalCrossSection * unattenProbs[i] * scores[i]);

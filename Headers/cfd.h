@@ -77,6 +77,13 @@ public:
         else
             return hist.getBinCenter(hist.getNBins() - 1);
     }
+    double getBinWidth(int binIdx) const
+    {
+        if (letharg)
+            return std::pow(10, hist.getBinCenter(binIdx) + hist.getBinWidth() / 2.0) - std::pow(10, hist.getBinCenter(binIdx) - hist.getBinWidth() / 2.0);
+        else
+            return hist.getBinWidth();
+    }
     // double getArea() const {return 4*M_PI*std::pow(detector.getRadius(), 2.0);}
     double getArea() const {return 1.0;}
     double getVolume() const {return 1.0;}
@@ -90,3 +97,4 @@ int forceDetection(Particle& particle, const MCSettings& config, Tally& tally);
 int forceDetectionNeutron(Particle& particle, const MCSettings& config, Tally& tally);
 int primaryContributionNeutron(const Particle& particle, const MCSettings& config, Tally& tally);
 int scatterContributionNeutron(Particle particle, const MCSettings& config, Tally& tally);
+int scatterContributionThermalNeutron(Particle particle, const MCSettings& config, Tally& tally);
