@@ -3,7 +3,7 @@
  * @Author: Ming Fang
  * @Date: 1969-12-31 18:00:00
  * @LastEditors: Ming Fang
- * @LastEditTime: 2021-11-02 15:51:36
+ * @LastEditTime: 2021-11-02 18:03:20
 -->
 # CFD
 The CFD algorithm consists of two parts, one responsible for tracking of particles in the materials, the other responsible for calculating the contributions of scttered particle to the detector volume. The structure is as following:
@@ -235,6 +235,7 @@ For F4 tally,
 $$
 D(\mu,E) = \frac{T}{V} = \frac{2\sqrt{R^2-L^2\sin^2\theta}}{V}
 $$,
+where $T$ is the particle's track length in the detector and $V$ is the detector volume.
 $$
 \int_\mu D(\mu, E) d\mu = \int_{0}^{\theta_m} \frac{2\sqrt{R^2-L^2 \sin^2\theta}}{V}\sin\theta d\theta = \frac{L}{V}\left[k-\frac{1-k^2}{2}\ln\left(\frac{1+k}{1-k}\right)\right]
 $$
