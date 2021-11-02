@@ -3,7 +3,7 @@
  * @Author: Ming Fang
  * @Date: 1969-12-31 18:00:00
  * @LastEditors: Ming Fang
- * @LastEditTime: 2021-11-01 21:38:18
+ * @LastEditTime: 2021-11-02 15:51:36
 -->
 # CFD
 The CFD algorithm consists of two parts, one responsible for tracking of particles in the materials, the other responsible for calculating the contributions of scttered particle to the detector volume. The structure is as following:
@@ -165,8 +165,11 @@ Next we discuss the calculation of probablity density function $p(\mu,E)$ for ga
 ### Gamma-rays
 For gamma rays, the probability density function is obtained by normalizing the Klein-Nishina equation:
 $$
-p(\mu,E) = \frac{\left(\frac{E(\mu)}{E_0}\right)^2 \left[\frac{E(\mu)}{E_0}+\frac{E_0}{E(\mu)}+1-\mu^2\right]}{\int_{-1}^1 \left(\frac{E(\mu)}{E_0}\right)^2 \left[\frac{E(\mu)}{E_0}+\frac{E_0}{E(\mu)}+1-\mu^2\right] d\mu} \delta(E-E(\mu)),\\
+p(\mu,E) = \frac{\left(\frac{E(\mu)}{E_0}\right)^2 \left[\frac{E(\mu)}{E_0}+\frac{E_0}{E(\mu)}+1-\mu^2\right]}{F(\alpha)} \delta(E-E(\mu)),\\
 \int_{-1}^1 \int_{0}^{+\infty} p(\mu,E)d\mu dE = 1
+$$
+$$
+F(\alpha) = \frac{\left(\alpha ^2+2 \alpha +2\right) \ln(2 \alpha +1)+\frac{2 \alpha  \left(\alpha ^3-7 \alpha ^2-8 \alpha -2\right)}{(2 \alpha +1)^2}}{\alpha ^3}
 $$
 $$
 E(\mu) = \frac{E_0}{1+\alpha (1-\mu)}, \alpha = \frac{E_0}{m_e c^2}
@@ -210,18 +213,28 @@ where $E_i$ is the center of $i$-th energy bin and $\Delta E_i$ is the width of 
 
 To reduce computation time, we run CFD for a fraction of thermal neutrons and we adjust their weights accordingly to avoid introducing bias.
 ### Detector Response
-The last term to calculate is the detector response integrated over the solid angle subtended by the detector. We calculate the response for three tyeps of tallies: F1, F2, and F4, assmuing the detector is a sphere of radius $R$ and the particle to detector distance is $L$. Let $k = \frac{R}{L}$.
-
+The last term to calculate is the detector response integrated over the solid angle subtended by the detector. We calculate the response for three tyeps of tallies: F1, F2, and F4, assmuing the detector is a sphere of radius $R$ and the particle to detector distance is $L$. Let $k = \frac{R}{L}, \theta_m = \arcsin(k)$.
+![alt text](cfd.png "Title")
 #### F1 tally
+For F1 tally, $D(\mu,E) = 1$,
 $$
 \int_\mu D(\mu, E) d\mu = \int_{0}^{\theta_m} \sin\theta d\theta = 1-\cos(\theta_m) = 1-\sqrt{1-k^2}
 $$
 #### F2 tally
+For F2 tally, 
+$$
+D(\mu,E) = \frac{1}{|\cos\alpha|} = \frac{R}{\sqrt{R^2-L^2\sin^2\theta}}=\frac{k}{\sqrt{k^2-\sin^2\theta}}
+$$,
+where $\alpha$ is the angle between the particle's moving direction and the normal vector at intersection.
 $$
 \int_\mu D(\mu, E) d\mu = \int_{0}^{\theta_m} \frac{k}{\sqrt{k^2-\sin^2\theta}}\sin\theta d\theta = \frac{k}{2} \ln\left(\frac{1+k}{1-k}\right)
 $$
 
 #### F4 tally
+For F4 tally, 
+$$
+D(\mu,E) = \frac{T}{V} = \frac{2\sqrt{R^2-L^2\sin^2\theta}}{V}
+$$,
 $$
 \int_\mu D(\mu, E) d\mu = \int_{0}^{\theta_m} \frac{2\sqrt{R^2-L^2 \sin^2\theta}}{V}\sin\theta d\theta = \frac{L}{V}\left[k-\frac{1-k^2}{2}\ln\left(\frac{1+k}{1-k}\right)\right]
 $$
