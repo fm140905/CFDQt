@@ -1,71 +1,77 @@
 <!--
- * @Description: 
+ * @Description: Methods of Particle Tracking Simulation and CFD Calculation.
  * @Author: Ming Fang
  * @Date: 1969-12-31 18:00:00
- * @LastEditors: Ming Fang
- * @LastEditTime: 2021-11-02 18:03:20
+ * @LastEditTime: 2021-11-02 23:24:27
 -->
-# CFD
-The CFD algorithm consists of two parts, one responsible for tracking of particles in the materials, the other responsible for calculating the contributions of scttered particle to the detector volume. The structure is as following:
+The CFD algorithm consists of two parts, one responsible for tracking of particles in the materials, the other responsible for calculating the contributions of scattered particle to the detector volume. The structure is as following:
 1. Create a particle from the source
 2. *Perform CFD of the primary particle*
 3. Move the particle to a new position where a scattering interaction is going to happen using the delta-tracking algorithm. Check if the particle is still within the ROI and if its energy/weight is above the rejection threshold. If not, go to step 1.
 4. *Perform CFD of the scattered particle*
 5. Update the energy and moving direction of the particle by sampling them from the differential cross-section. Go to step 3.
 
-CFD calculations are performed at step 2 and step 4, where a copy of the particle is sent to the CFD subroutine, without interfereing the tracking of the particle.
+CFD calculations are performed at step 2 and step 4, where a copy of the particle is sent to the CFD subroutine, without interfering the tracking of the particle.
+
+Several approximations have been made to accelerate the particle tracking and CFD calculation:
+1. For gamma rays, elastic scattering effect is neglected. Furthermore, we assume target electrons are initially free and rest, in which case the Klein-Nishina formula can be applied to calculate the differential Compton scattering cross-section.
+2. For neutrons, Only elastic scattering are considered in neutron tracking and CFD. Chemical binding and crystalline effects of the target molecule are neglected.
 
 In the next sections, we first describe the particle tracking methods for gamma-rays and neutrons (both fast and slow), and then we describe the CFD calculation algorithms.
 
 
-## Particle Tracking
+# Particle Tracking
 
-### Delta-tracking algorithm
+## Delta-tracking algorithm
 Delta-tracking algorithm is used to sample the distance that the particle will travel along its current moving direction before the next interaction happens [1]. Let $u_{max}(E)$ be the maximum of the total macroscopic cross-sections of all materials, where $E$ is the particle's energy. The distance is sampled as follows:
 
 1. Let the particle move by a distance $d = -\ln(\xi)/u_{max}(E)$, where $\xi$ is random number sampled from $U(0,1)$.
 2. If the particle is not in ROI, exit.
 3. Let $u_i(E)$ be the attenuation coefficient of the material where the particle is now at. If $\xi < u_i(E) / u_{max}(E)$, exit; else, go back to step 1. 
 
-### Scattering Simulation
+## Scattering Simulation
 
 After delta-tracking, the particle is now going to interact with the material at current position. we need to sample a new energy and a scattering angle from the differential cross-section of the material. Three cases are discussed below.
 
-#### Gamma-rays
+### Gamma-rays
 We first force this interaction to be Compton scattering, by multiplying its weight by the factor
 $$
-\frac{\sigma_s(E)}{\sigma_{tot}(E)}
+\frac{\Sigma_s(E)}{\Sigma_{tot}(E)}
 $$
-where $\sigma_s$ is the Compton scattering cross-section, and $\sigma_{tot}$ is the total cross-section.
+where $\Sigma_s$ is the macroscopic incoherent scattering cross-section, and $\Sigma_{tot}$ is the macroscopic total cross-section. For material consisting of more than one nuclides, the cross-section should be summed over all nuclides:
+$$
+{\Sigma}_s = \sum_{i=1}^N \Sigma_s^i, {\Sigma}_{tot} = \sum_{i=1}^N \Sigma_{tot}^i
+$$
+where $\Sigma^i$ is the macroscopic cross-section of nuclide $i$.
 
-For gamma-rays, the Compton scattering differential cross-section is given by the Klein-Nishina equation:
+For gamma-rays, the Compton scattering differential cross-section is given by the Klein-Nishina formula:
 $$
-\frac{d^2\sigma}{dEd\mu} = K\left(\frac{E(\mu)}{E_0}\right)^2 \left[\frac{E(\mu)}{E_0}+\frac{E_0}{E(\mu)}+1-\mu^2\right] \delta(E-E(\mu))
+\frac{d^2\sigma_s}{dEd\mu} = K\left(\frac{E(\mu)}{E_0}\right)^2 \left[\frac{E(\mu)}{E_0}+\frac{E_0}{E(\mu)}+1-\mu^2\right] \delta(E-E(\mu))
 $$
 $$
 E(\mu) = \frac{E_0}{1+\alpha (1-\mu)}, \alpha = \frac{E_0}{m_e c^2}
 $$
-where $K$ is a constant, $E_0$ is the photon energy before scattering, $E$ is the photon energy after scattering, $m_ec^2$ is 511 keV. Kahn's rejection algorithm is used to sample the energy $E$ and scattering angle $\mu$ from the differential cross-section [2].
-#### Fast neutrons
+where $K$ is a constant, $E_0$ is the photon energy before scattering, $E$ is the photon energy after scattering, $\delta(x)$ is the Dirac-delta function, $m_ec^2$ is 511 keV. Kahn's rejection algorithm is used to sample an energy $E$ and scattering angle $\mu$ from the differential cross-section [2].
+### Fast neutrons
 For neutrons, we first need to sample the nuclide that neutron is going to interact with. Let $\Sigma_{tot}^j$ be the total macroscopic cross-section of nuclide $j$ and we select the nuclide $i$ that meets the following condition:
 $$
 \frac{\sum_{j=1}^{i}\Sigma_{tot}^j}{\sum_{j=1}^{N} \Sigma_{tot}^j} < \xi < \frac{\sum_{j=1}^{i+1}\Sigma_{tot}^{j}}{\sum_{j=1}^{N}\Sigma_{tot}^j}
 $$
-where $\xi$ is a random number. Similar to gamma rays, we force the interaction to be elastic scaatering by multplying the wieght by a factor
+where $\xi$ is a random number. Similar to gamma rays, we force the interaction to be elastic scattering by multiplying the weight by the factor
 $$
-\frac{\sigma_s(E)}{\sigma_{tot}(E)}
+\frac{\Sigma_s^i(E)}{\Sigma_{tot}^i(E)}
 $$
-where $\sigma_s$ is the neutron elastic scattering cross-section, and $\sigma_{tot}$ is the neutron total cross-section.
+where $\Sigma_s^i$ is the macroscopic neutron elastic scattering cross-section of target nuclide $i$, and $\Sigma_{tot}^i$ is the macroscopic neutron total cross-section of target nuclide $i$.
 
 Next we sample the energy and scattering angle after scattering. The probability density function (PDF) of scattering angle $\mu_{cm}$ in center-of-mass (CM) system can be approximated by: 
 $$
 p(\mu_{cm}) = \frac{1}{2} + \sum_{l=1}^N \frac{2l+1}{2}a_l(E_0)P_l(\mu_{cm}), \int_{-1}^1 p(\mu_{cm}) d\mu_{cm} =1
 $$
-where $E_0$ is the incoming neutron energy, $P_l(\mu_{cm})$ is the $l$-th Legendre polynominal, and $a_l(E_0)$ is the coefficient given in ENDF library [3].
+where $E_0$ is the incoming neutron energy, $P_l(\mu_{cm})$ is the $l$-th Legendre polynomial, and $a_l(E_0)$ is the coefficient given in ENDF library [3].
 
-To sample $\mu_{cm}$ from the PDF, we first calculate the cumulative probability distribution (CDF) and divide it into 100 equal-probability bins, i.e. (0, 0.01], (0.01, 0.02], ..., (0.99, 1]. We solve the following equations numerically
+To sample $\mu_{cm}$ from the PDF, we first calculate the cumulative probability distribution (CDF) and divide it into 100 equal-probable bins, i.e. (0, 0.01], (0.01, 0.02], ..., (0.99, 1]. We solve the following equations numerically
 $$
-\mathrm{CDF}(\mu_i) = 0.01 * i, i = 0,1, ..., 100
+\mathrm{CDF}(\mu_i) = 0.01i, i = 0,1, ..., 100
 $$
 We created a table of $\mu_i$ by iterating all points on energy grids. When a neutron of energy $E_0$ scatters with a given nucleus, we find the closest entry on the energy grid and samples $\mu_{cm}$ based on the list of $\mu_i$:
 $$
@@ -79,7 +85,7 @@ $$
 $$
 \mu = \frac{1+\mu_{cm} M}{\sqrt{1+M^2+2\mu_{cm} M}}
 $$
-where $M$ is the mass number of traget nucleus.
+where $M$ is the mass number of target nucleus.
 
 If the target nucleus is a proton, a simpler scheme can be used considering that the neutron-proton scattering is isotropic in center-of-mass (CM) system. In this case,
 $$
@@ -89,7 +95,7 @@ E = \frac{1+\mu_{cm}}{2}E_0,\\
 $$
 where $\xi$ is a random number on [0,1].
 
-#### Thermal neutrons
+### Thermal neutrons
 Assuming a Maxwellian energy distribution of the scattering medium, the differential scattering cross section of the scattering atoms in the laboratory system can be approximated as follows [4,5,6]:
 $$
 \frac{d^2\sigma_s}{dEd\mu} = \sigma_0 f(\mu,E)
@@ -102,7 +108,7 @@ $$
 $$
 where $\sigma_0$ is the zero-temperature elastic differential cross section from ENDF, $E_0$ is the neutron energy before scattering, $E$ is the neutron energy after scattering, $M$ is the mass of the scattering nucleus, $m$ is the mass of the neutron, $T$ is the temperature, $k$ is the Boltzmann constant. 
 
-The total elastic scattering crosssection $\sigma_s$ is [7]
+The total elastic scattering cross-section $\sigma_s$ is [7]
 $$
 \sigma_s = \int\int \frac{d^2\sigma_s}{dEd\mu} dEd\mu = \sigma_0 F(E_0)
 $$
@@ -118,7 +124,7 @@ After correcting the neutron cross-sections, we follow the same steps as in fast
 
 Next we sample the energy $E$ and scattering angle $\mu$ based on the differential cross-section. We used the sampling scheme described in [5,6].
 
-#### Update Particle Moving Direction
+### Update Particle Moving Direction
 Given the initial moving direction is $\vec{v}=(v_x, v_y, v_z)$ and the scattering angle is $\mu$, we want to find after scattering the moving direction $\vec{u}=(u_x,u_y,u_z)$. $\|u\|=\|v\|=1$. We first sample an azimuthal angle $\phi$ uniformly:
 $$
 \phi = 2\pi \xi
@@ -136,7 +142,7 @@ u_y = \sqrt{1-\mu^2}\sin\phi,\\
 u_z = \mu v_z
 $$
 if $v_z = \pm 1$.
-## CFD
+# CFD
 The CFD calculation is performed at two steps, when the particle is first created and when the particle is being scattered.
 
 For newly created particles, CFD is relatively straightforward. We first check if the particle is moving towards the detector. If yes, we calculate the probability $P$ that the particle is not attenuated by the material along its path and add its contribution $N(E)$ to the tally.
@@ -144,32 +150,39 @@ $$
 N(E) = P(E) \times D(\mu,E),\\
 P(E) = \exp\left(-\int u(x,E) dx\right)
 $$
-where $E$ is the particle's energy, $u(x,E)$ is the total macroscopic cross-section at position $x$, $D(\mu,E)$ is the detector's reponse to the incoming particle. For example, if F4 tally is used,
+where $E$ is the particle's energy, $u(x,E)$ is the total macroscopic cross-section at position $x$, $D(\mu,E)$ is the detector's response to the incoming particle. For example, if F4 tally is used,
 $$
 D(\mu, E) = \frac{w T}{V}
 $$
 where $w$ is the particle's weight, $T$ is the track length in th detector and $V$ is the detector volume.
 
-For particles that is being scattered, their contirbution is given by
+For particles that is being scattered, their contribution is given by
 $$
-N(E) = \frac{\sigma_s}{\sigma_{tot}}\int_{\Omega}p(\mu,\phi,E)  \exp(-\int u(x,E)dx) D(\mu,\phi,E) d\mu d\phi
+N(E) = \sum_{i=1}^N \frac{\Sigma_s^i(E_0)}{\Sigma_{tot}(E_0)}\int_{\Omega}p_i(\mu,\phi,E)  \exp(-\int u(x,E)dx) D(\mu,\phi,E) d\mu d\phi
 $$
-where $E$ is the particle's energy after scattering, $\frac{\sigma_s}{\sigma_{tot}}$ is the probability that the interaction is scattering, $p(\mu,\phi,E) $ is the probability density funtion that the particle is scattered with scattering angle $\mu$ and $\phi$, $\exp(-\int u(x,E)dx)$ is the probability that the particle will not be attenuated when travling towards the detector, and $D(\mu,\phi,E)$ is the detector's reponse to the incoming particle. The integration is performed in the lab system over the solid angle subtended by the detector to the particle.
+where $i$ is the nuclide index, $E_0$ is the particle energy before scattering, $\Sigma_{tot}$ is the macroscopic total cross-section of the material, $\Sigma_{s}^i$ is the macroscopic scattering cross-section of nuclide $i$, $E$ is the particle's energy after scattering, $p_i(\mu,\phi,E) $ is the probability density function that the particle is scattered with scattering angle $\mu$ and $\phi$, $\exp(-\int u(x,E)dx)$ is the probability that the particle will not be attenuated when traveling towards the detector, and $D(\mu,\phi,E)$ is the detector's response to the incoming particle. The integration is performed in the lab system over the solid angle subtended by the detector to the particle.
 
-To simplifiy the calculation, we assume the the solid angle is sufficiently small so that $\mu$ does not vary significantly. $\mu$ is the cosine of the angle between the particle's moving direction and the line connecting the particle and detector's center. Furthermore, we assume that both the angular distribution $p(\mu,\phi,E) $ and the detector response $D(\mu,\phi,E)$ are independent of $\phi$, which results in
+To simplify the calculation, we assume the the solid angle is sufficiently small so that $\mu$ does not vary significantly. $\mu$ is the cosine of the angle between the particle's moving direction and the line connecting the particle and detector's center. Furthermore, we assume that both the angular distribution $p(\mu,\phi,E) $ and the detector response $D(\mu,\phi,E)$ are independent of $\phi$, which results in
 $$
-N(E) = \frac{\sigma_s}{\sigma_{tot}} p(\mu, E)  \exp(-\int u(x,E)dx) \int_{\mu}D(\mu,E)d\mu
+N(E) = \sum_{i=1}^N \frac{\Sigma_s^i(E_0)}{\Sigma_{tot}(E_0)} p_i(\mu, E)  \exp(-\int u(x,E)dx) \int_{\mu}D(\mu,E)d\mu
 $$
 
-Next we discuss the calculation of probablity density function $p(\mu,E)$ for gamma rays, fast neutrons, and thermal neutrons. 
+## Probability Density Function
+Next we discuss the calculation of probability density function $p_i(\mu,E)$ for gamma rays, fast neutrons, and thermal neutrons. 
 ### Gamma-rays
-For gamma rays, the probability density function is obtained by normalizing the Klein-Nishina equation:
+For gamma rays, the probability density function is independent of nuclide index $i$. Therefore, 
 $$
-p(\mu,E) = \frac{\left(\frac{E(\mu)}{E_0}\right)^2 \left[\frac{E(\mu)}{E_0}+\frac{E_0}{E(\mu)}+1-\mu^2\right]}{F(\alpha)} \delta(E-E(\mu)),\\
+N(E) = \frac{\Sigma_s(E_0)}{\Sigma_{tot}(E_0)} p(\mu, E)  \exp(-\int u(x,E)dx) \int_{\mu}D(\mu,E)d\mu
+$$
+where $\Sigma_s$ is the macroscopic inelastic cross-section.
+
+$p(\mu,E)$ can be obtained by normalizing the Klein-Nishina equation:
+$$
+p(\mu,E) = \frac{\left(\frac{E(\mu)}{E_0}\right)^2 \left[\frac{E(\mu)}{E_0}+\frac{E_0}{E(\mu)}+1-\mu^2\right]}{G(E_0)} \delta(E-E(\mu)),\\
 \int_{-1}^1 \int_{0}^{+\infty} p(\mu,E)d\mu dE = 1
 $$
 $$
-F(\alpha) = \frac{\left(\alpha ^2+2 \alpha +2\right) \ln(2 \alpha +1)+\frac{2 \alpha  \left(\alpha ^3-7 \alpha ^2-8 \alpha -2\right)}{(2 \alpha +1)^2}}{\alpha ^3}
+G(E_0) = \frac{\left(\alpha ^2+2 \alpha +2\right) \ln(2 \alpha +1)+\frac{2 \alpha  \left(\alpha ^3-7 \alpha ^2-8 \alpha -2\right)}{(2 \alpha +1)^2}}{\alpha ^3}
 $$
 $$
 E(\mu) = \frac{E_0}{1+\alpha (1-\mu)}, \alpha = \frac{E_0}{m_e c^2}
@@ -194,7 +207,7 @@ p(\mu,E) = p(\mu_{cm},E)\frac{d\mu_{cm}}{d\mu},\\
 \frac{d\mu_{cm}}{d\mu} = \frac{\frac{\sqrt{1+M^2+2\mu_{cm} M}}{M}}{1-\frac{\mu}{\sqrt{1+M^2+2\mu_{cm} M}}}
 $$
 ### Thermal Neutrons
-For thermal neutrons, the probability denisty function $p(\mu, E)$ is given by
+For thermal neutrons, the probability density function $p(\mu, E)$ is given by
 $$
 p(\mu, E) = \frac{2}{F(E_0)}\sqrt{\frac{E}{E_0}}\sqrt{\frac{M}{2\pi kT\epsilon^2}}\exp\left[-\frac{M}{2kT\epsilon^2} (E_0-E-\frac{\epsilon^2}{2M})^2\right],\\
 \int_{-1}^1 \int_{0}^{+\infty} p(\mu,E)d\mu dE = 1
@@ -212,35 +225,36 @@ $$
 where $E_i$ is the center of $i$-th energy bin and $\Delta E_i$ is the width of the $i$-th energy bin.
 
 To reduce computation time, we run CFD for a fraction of thermal neutrons and we adjust their weights accordingly to avoid introducing bias.
-### Detector Response
-The last term to calculate is the detector response integrated over the solid angle subtended by the detector. We calculate the response for three tyeps of tallies: F1, F2, and F4, assmuing the detector is a sphere of radius $R$ and the particle to detector distance is $L$. Let $k = \frac{R}{L}, \theta_m = \arcsin(k)$.
+## Detector Response
+The last term to calculate is the detector response integrated over the solid angle subtended by the detector. We calculate the response for three types of tallies: F1, F2, and F4, assuming the detector is a sphere of radius $R$ and the particle to detector distance is $L$. Let $k = \frac{R}{L}, \theta_m = \arcsin(k)$.
 ![alt text](cfd.png "Title")
-#### F1 tally
+### F1 tally
 For F1 tally, $D(\mu,E) = 1$,
 $$
 \int_\mu D(\mu, E) d\mu = \int_{0}^{\theta_m} \sin\theta d\theta = 1-\cos(\theta_m) = 1-\sqrt{1-k^2}
 $$
-#### F2 tally
+
+### F2 tally
 For F2 tally, 
 $$
 D(\mu,E) = \frac{1}{|\cos\alpha|} = \frac{R}{\sqrt{R^2-L^2\sin^2\theta}}=\frac{k}{\sqrt{k^2-\sin^2\theta}}
-$$,
+$$
 where $\alpha$ is the angle between the particle's moving direction and the normal vector at intersection.
 $$
 \int_\mu D(\mu, E) d\mu = \int_{0}^{\theta_m} \frac{k}{\sqrt{k^2-\sin^2\theta}}\sin\theta d\theta = \frac{k}{2} \ln\left(\frac{1+k}{1-k}\right)
 $$
 
-#### F4 tally
+### F4 tally
 For F4 tally, 
 $$
 D(\mu,E) = \frac{T}{V} = \frac{2\sqrt{R^2-L^2\sin^2\theta}}{V}
-$$,
+$$
 where $T$ is the particle's track length in the detector and $V$ is the detector volume.
 $$
 \int_\mu D(\mu, E) d\mu = \int_{0}^{\theta_m} \frac{2\sqrt{R^2-L^2 \sin^2\theta}}{V}\sin\theta d\theta = \frac{L}{V}\left[k-\frac{1-k^2}{2}\ln\left(\frac{1+k}{1-k}\right)\right]
 $$
 
-## References
+# References
 1. Woodcock, E., Murphy, T., Hemmings, P. & Longworth, S. Techniques used in the gem code for monte carlo neutronics calculations in reactors and other systems of complex geometry. In Proc. Conf. Applications of Computing Methods to Reactor Problems, vol. 557 (1965).
 2. Kahn, Herman. Applications of monte carlo. No. AECU-3259; RM-1237-AEC. RAND Corp., Santa Monica, Calif., 1954.
 3. Chadwick, Mark B., et al. "ENDF/B-VII. 1 nuclear data for science and technology: cross sections, covariances, fission product yields and decay data." Nuclear data sheets 112.12 (2011): 2887-2996.
