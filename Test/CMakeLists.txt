@@ -14,12 +14,12 @@ add_test(
     COMMAND geometryTest
 )
     
-add_executable(dataTest dataTest.cpp)
-target_link_libraries(dataTest PUBLIC data gtest_main)
+add_executable(materialTest materialTest.cpp)
+target_link_libraries(materialTest PUBLIC data material gtest_main)
 # set_target_properties(dataTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 add_test(
-    NAME dataTest
-    COMMAND dataTest
+    NAME materialTest
+    COMMAND materialTest
 )
 
 add_executable(cellTest cellTest.cpp)

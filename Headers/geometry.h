@@ -4,7 +4,7 @@
  * @version 0.1
  * @date 2021-07-26
  * 
- * @copyright Copyright (c) 2021
+ * @author Ming Fang
  * 
  */
 
@@ -26,6 +26,12 @@ private:
     QVector3D origin;
     QVector3D direction; // unit vector
 public:
+    /**
+     * @brief Construct a new Ray object
+     * 
+     * @param p Origin of the ray
+     * @param d Direction of the ray
+     */
     Ray(const QVector3D& p, const QVector3D& d)
        : origin(p), 
          direction(d.normalized()) 
@@ -39,7 +45,20 @@ public:
 class Shape
 {
 public:
+    /**
+     * @brief Check if a point is in this object
+     * 
+     * @param point point to be checked
+     * @return true if point is in this object.
+     * @return false else
+     */
     virtual bool contain(const QVector3D& point) const = 0;
+    /**
+     * @brief Get the length of intersection between this object and a given ray
+     * 
+     * @param ray 
+     * @return double 
+     */
     virtual double intersection(const Ray& ray) const = 0;
 };
 
@@ -50,6 +69,13 @@ private:
     double radius;
     double height;
 public:
+    /**
+     * @brief Construct a new Cylinder object. The axis direction is (0, 0, 1)
+     * 
+     * @param p center of the bottom surface
+     * @param h height of the cylinder
+     * @param r radius of the cylinder
+     */
     Cylinder(const QVector3D& p, const double h, const double& r)
         : baseCenter(p),
           height(h),
@@ -74,6 +100,12 @@ private:
     const QVector3D center;
     const double radius;
 public:
+    /**
+     * @brief Construct a new Sphere object
+     * 
+     * @param c Center of the sphere
+     * @param r Radius of the sphere
+     */
     Sphere(const QVector3D& c, const double r) 
         : center(c), radius(r) {}
     // ~Sphere();

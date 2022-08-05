@@ -5,7 +5,7 @@
  * @version 0.1
  * @date 2021-07-26
  * 
- * @copyright Copyright (c) 2021
+ * @author Ming Fang
  * 
  */
 #pragma once
@@ -14,11 +14,19 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 
 class Histogram
 {
 public:
     Histogram() {}
+    /**
+     * @brief Construct a new Histogram object
+     * 
+     * @param nbins_ Number of equal-size bins
+     * @param lower_ Left edge of first bin 
+     * @param upper_ Right edge of last bin 
+     */
     Histogram(const int nbins_, const double lower_, const double upper_)
         : nbins(nbins_),
           lowerEdge(lower_),
@@ -34,6 +42,7 @@ public:
     std::vector<double> getBinCenters() const;
     std::vector<double> getBinContents() const;
     int getTotalCounts() const;
+    double getBinWidth() const {return binwidth;}
 
     // setters
     void setBinContents(const std::vector<double> counts);
@@ -41,7 +50,7 @@ public:
     // fill new data
     bool fill(const double item, const double weight=1);
 
-    // clear
+    // clear bin data
     void clear();
 
     // rebin
@@ -57,36 +66,4 @@ private:
     int totalCounts;
 };
 
-class Material
-{
-private:
-    int matID;
-    double density; // g*cm^-3
-    // center of energy bins, MeV
-    std::vector<double> EBinCenters;
-    // integrated Compton cross section over 4pi slod angle
-    std::vector<double> IntegralComptonCrossSection;
-    // Compton over total
-    std::vector<double> ComptonOverTotal;
-    // total attenuation coefficient, cm^{-1}
-    std::vector<double> totalAtten;
-    // min energy
-    double Emin;
-    double Emax;
-    double deltaE;
-    int NEbin;
-public:
-    // constructor
-    Material(const std::string fpath, const double d, const int id);
-    // ~Material();
-
-    double getMaxE() const {return Emax;}
-    double getMinE() const {return Emin;}
-    double getBinWidth() const {return deltaE;}
-    double getEBinCenter(const int i) const {return EBinCenters[i];}
-    double getNbins() const {return NEbin;}
-    double getDensity() const {return density;}
-    double getAtten(const double erg) const;
-    double getTotalComptonIntegral(const double erg) const;
-    double getComptonOverTotal(const double erg) const;
-};
+std::string getRootDir();

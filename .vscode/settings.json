@@ -1,7 +1,8 @@
 {
     "files.associations": {
         "*.json": "jsonc",
-        "qapplication": "cpp"
+        "qapplication": "cpp",
+        "cmath": "cpp"
     },
     "cmake.configureSettings": {
         "CMAKE_PREFIX_PATH": "/home/ming/Qt/5.12.3/gcc_64"

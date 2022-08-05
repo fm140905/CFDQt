@@ -1,18 +1,20 @@
 cmake_minimum_required(VERSION 3.16.3)
 
-project(WaterCylinder CXX)
+project(CFDNeutron CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Headers)
 
-find_package(Qt5 REQUIRED COMPONENTS Core Gui)
+find_package(Qt5 REQUIRED COMPONENTS Gui)
 
-find_package(OpenMP)
-# if(OpenMP_CXX_FOUND)
-#     target_link_libraries(MyTarget PUBLIC OpenMP::OpenMP_CXX)
-# endif()
+# find_package(OpenMP)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose Release or Debug" FORCE)
+endif ()
+message(STATUS "Build type: '${CMAKE_BUILD_TYPE}'")
 
 option(ENABLE_UNIT_TESTS "Enable unit tests" ON)
 message(STATUS "Enable testing: ${ENABLE_UNIT_TESTS}")
@@ -34,3 +36,4 @@ if (ENABLE_UNIT_TESTS)
 endif()
 
 add_subdirectory(Sources)
+add_subdirectory(Examples)
