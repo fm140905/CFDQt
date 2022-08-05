@@ -15,6 +15,24 @@
 #include "cell.h"
 
 /**
+ * @brief Perform delta tracking of a particle
+ *
+ * @param particle Particle to be updated
+ * @param config MC run settings
+ * @return true if photon stays within ROI
+ * @return false if photon leaves ROI
+ */
+bool deltaTracking(Particle& particle, const MCSettings& config);
+
+/**
+ * @brief Simulate particle scattering.
+ * @param particle Particle to be updated.
+ * @param config MC run settings
+ * @return
+ */
+int scattering(Particle& particle, const MCSettings& config);
+
+/**
  * @brief Perform delta tracking of a photon. Photon travels along the current direction, 
  *        and its position and weight are updated, 
  *        until a Compton scattering is going to happen.
@@ -24,7 +42,7 @@
  * @return true if photon stays within ROI
  * @return false if photon leaves ROI
  */
-bool deltaTracking(Particle& particle, const MCSettings& config);
+bool deltaTrackingPhoton(Particle& particle, const MCSettings& config);
 
 /**
  * @brief Perform delta tracking of a neutron. Photon travels along the current direction, 

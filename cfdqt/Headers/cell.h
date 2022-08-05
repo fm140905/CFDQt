@@ -19,6 +19,7 @@ class Particle
 {
 private:
 public:
+    enum ParticleType {Photon, Neutron};
     /**
      * @brief Construct a new Particle
      * 
@@ -26,11 +27,12 @@ public:
      * @param d initial moving direction, normalized
      * @param erg initial energy. MeV for gamma, eV for neutron
      * @param w initial weight
+     * @param t particle type
      * @param n initial number of scatterings
      * @param b whether particle is outside of ROI
      */
-    Particle(const QVector3D& p, const QVector3D& d, const double erg, const double w, const int n, const bool b)
-        : pos(p), dir(d.normalized()), ergE(erg), weight(w), scatterN(n), escaped(b) 
+    Particle(const QVector3D& p, const QVector3D& d, const double erg, const double w,  const ParticleType t, const int n, const bool b)
+        : pos(p), dir(d.normalized()), ergE(erg), weight(w), particleType(t), scatterN(n), escaped(b) 
     {
         initpos = pos;
     }
@@ -41,9 +43,12 @@ public:
      * @param d initial moving direction, normalized
      * @param erg initial energy. eV for gamma, MeV for neutron
      * @param w initial weight
+     * @param t particle type
      */
-    Particle(const QVector3D& p, const QVector3D& d, const double erg, const double w)
-        : Particle(p, d, erg, w, 0, false) {}
+    Particle(const QVector3D& p, const QVector3D& d, const double erg, const double w, const ParticleType t)
+        : Particle(p, d, erg, w, t, 0, false) {}
+    // particle type
+    ParticleType particleType;
     // initial position
     QVector3D initpos; // for debugging
     // current position
@@ -115,6 +120,8 @@ private:
     const std::vector<double> invCDF;
     // width of the CDF bin
     double CDFBinWidth;
+    // particle type
+    const Particle::ParticleType particleType;
 public:
     /**
      * @brief Construct a new Source object
@@ -124,9 +131,10 @@ public:
      *               A vector of energies. If only one element, the source is monoergetic.
      *               If N elements, there are N-1 equal-probable bins and 
      *               each elment E_i satifies P(E<E_i) = i/(N-1), i=0, ..., N-1
+     * @param t Source particle type.
      */
-    Source(const Cylinder& cyl, const std::vector<double>& ergCDF)
-        : cylinder(cyl), invCDF(ergCDF) 
+    Source(const Cylinder& cyl, const std::vector<double>& ergCDF, const Particle::ParticleType t)
+        : cylinder(cyl), invCDF(ergCDF), particleType(t)
         {
             if (invCDF.size() > 1)
             {

@@ -2,6 +2,23 @@
 
 bool deltaTracking(Particle& particle, const MCSettings& config)
 {
+    if (particle.particleType == Particle::Photon)
+        return deltaTrackingPhoton(particle, config);
+    else if (particle.particleType == Particle::Neutron)
+        return deltaTrackingNeutron(particle, config);
+    return false;
+}
+
+int scattering(Particle& particle, const MCSettings& config)
+{
+    if (particle.particleType == Particle::Photon)
+        return ComptonScattering(particle, config);
+    else if (particle.particleType == Particle::Neutron)
+        return neutronElasticScattering(particle, config);
+}
+
+bool deltaTrackingPhoton(Particle& particle, const MCSettings& config)
+{
     const double muMax = config.getMuMax(particle.ergE);
     while (!particle.escaped)
     {

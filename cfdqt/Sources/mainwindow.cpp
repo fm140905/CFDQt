@@ -295,8 +295,8 @@ void MainWindow::updateSpectrum(CustomPlotZoom* customPlot, const Tally& tally)
     // TODO
     customPlot->graph()->data().clear();
     int counts = tally.getNPS();
-    std::vector<double> bins = tally.hist.getBinCenters();
-    std::vector<double> flux = tally.hist.getBinContents();
+    std::vector<double> bins = tally.getBinCenters();
+    std::vector<double> flux = tally.getBinContents();
     customPlot->graph()->setData(QVector<double>(bins.begin(), bins.end()),
                                  QVector<double>(flux.begin(), flux.end()),true);
 
@@ -310,6 +310,10 @@ void MainWindow::updateSpectrum(CustomPlotZoom* customPlot, const Tally& tally)
         customPlot->yAxis->setScaleType(QCPAxis::stLogarithmic);
     else
         customPlot->yAxis->setScaleType(QCPAxis::stLinear);
+    if(tally.isLethargyBin())
+        customPlot->xAxis->setScaleType(QCPAxis::stLogarithmic);
+    else
+        customPlot->xAxis->setScaleType(QCPAxis::stLinear);
     customPlot->replot();
 }
 

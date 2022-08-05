@@ -3,18 +3,32 @@
 
 int forceDetection(Particle& particle, const MCSettings& config, Tally& tally)
 {
-    if (particle.scatterN == 0)
+    if (particle.particleType == Particle::Photon)
     {
-        primaryContribution(particle, config, tally);
+        if (particle.scatterN == 0)
+        {
+            primaryContributionPhoton(particle, config, tally);
+        }
+        else
+        {
+            scatterContributionPhoton(particle, config, tally);
+        }
     }
-    else
+    else if (particle.particleType == Particle::Neutron)
     {
-        scatterContribution(particle, config, tally);
+        if (particle.scatterN == 0)
+        {
+            primaryContributionNeutron(particle, config, tally);
+        }
+        else
+        {
+            scatterContributionNeutron(particle, config, tally);
+        }
     }
     return 0;
 }
 
-int primaryContribution(const Particle& particle, const MCSettings& config, Tally& tally)
+int primaryContributionPhoton(const Particle& particle, const MCSettings& config, Tally& tally)
 {
     QVector3D prtl2det = tally.getCenter() - particle.pos;
     double proj = QVector3D::dotProduct(prtl2det, particle.dir);
@@ -42,7 +56,7 @@ int primaryContribution(const Particle& particle, const MCSettings& config, Tall
     return 0;
 }
 
-int scatterContribution(Particle particle, const MCSettings& config, Tally& tally)
+int scatterContributionPhoton(Particle particle, const MCSettings& config, Tally& tally)
 {
     // determine the scattering angle if the particle
     // were scattered towards the detector

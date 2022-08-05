@@ -37,7 +37,7 @@ Particle Source::createParticle() const
         double yr = invCDF[static_cast<int>(idx) + 1];
         initE = (yl * (xr - a) + yr * (a - xl)) / CDFBinWidth;
     }
-    return Particle(initPos, initDir, initE, 1.0);
+    return Particle(initPos, initDir, initE, 1.0, particleType);
 }
 
 void Particle::scatter(const double cosAng)

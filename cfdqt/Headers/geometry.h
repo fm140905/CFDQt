@@ -66,8 +66,8 @@ class Cylinder : public Shape
 {
 private:
     QVector3D baseCenter;
-    double radius;
     double height;
+    double radius;
 public:
     /**
      * @brief Construct a new Cylinder object. The axis direction is (0, 0, 1)

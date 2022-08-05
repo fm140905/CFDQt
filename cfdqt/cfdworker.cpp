@@ -5,8 +5,7 @@
 #include <QDebug>
 
 CFDWorker::CFDWorker(QObject *parent)
-    : QObject(parent),
-      tally(Tally(Sphere(QVector3D(100, 100, 10), 2.54), 100, 0, 1.0))
+    : QObject(parent)
 {
     initSetup();
 //    // initialize tally F2
@@ -25,8 +24,35 @@ CFDWorker::~CFDWorker()
 void CFDWorker::initSetup()
 {
     // initialize gemoetry
-    const Cylinder waterCylinder = Cylinder(QVector3D(25, 25, 0), 52, 21.5);
     const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
+    const Sphere detectorSphere = Sphere(QVector3D(100, 100, 10), 2.54);
+    const Cylinder waterCylinder = Cylinder(QVector3D(25, 25, 0), 52, 21.5);
+    // initialize source, eV for neutron, MeV for gamma
+    std::vector<double> srcEnergyCDF{0.661}; // Cs137
+    const Source source = Source(sourceCylinder, srcEnergyCDF, Particle::Photon);
+    // initialize settings
+    const int maxN = 100000;
+    const double maxScatterN = 5;
+    const double minE = 0.1;
+    const double minW = 0.01;
+    // initialize tally
+    tally = Tally(detectorSphere, 100, 0, 1.0, false);
+
+//    const Cylinder waterCylinder = Cylinder(QVector3D(25, 25, 0), 52, 5);
+//    const Sphere detectorSphere = Sphere(QVector3D(75, 75, 10), 2.54);
+//    // initialize source, eV for neutron, MeV for gamma
+//    std::vector<double> srcEnergyCDF{0, 478702, 817756, 1.15082e6,
+//                                    1.50133e6,1.88769e6,2.33337e6,2.87784e6,
+//                                    3.60501e6,4.77086e6,1e7}; // Cf-252
+//    const Source source = Source(sourceCylinder, srcEnergyCDF, Particle::Neutron);
+//    // initialize settings
+//    const int maxN = 10000;
+//    const double maxScatterN = 100;
+//    const double minE = 1e-4;  // eV for neutron, MeV for gamma
+//    const double minW = 0.01;
+//    // initialize tally
+//    tally = Tally(detectorSphere, 110, 1e-3, 1e8, true);
+
     // load cross-section tables
     std::string rootdir("/media/ming/DATA/projects/2021_DTRA/cfdneutron/cfdqt");
     const PhotonCrossSection photonCrossSection(rootdir+"/DATA/H2O.csv");
@@ -44,14 +70,7 @@ void CFDWorker::initSetup()
     const Material water = Material(waterDensity, 18, {{2, H1}, {1, O16}});
     // initialize cell
     const Cell waterCell = Cell(water, waterDensity, waterCylinder);
-    // initialize source, eV for neutron, MeV for gamma
-    std::vector<double> srcEnergyCDF{0.661}; // Cs137
-    const Source source = Source(sourceCylinder, srcEnergyCDF);
-    // initialize settings
-    const int maxN = 100000;
-    const double maxScatterN = 5;
-    const double minE = 0.1;
-    const double minW = 0.01;
+
     config = new MCSettings(waterCylinder, std::vector<Cell>{waterCell}, source, maxN, maxScatterN, minW, minE);
 }
 
@@ -96,12 +115,12 @@ void CFDWorker::getSpectrum()
         {
             prtl.scatterN += 1;
             forceDetection(prtl, *config, tally);
-            ComptonScattering(prtl, *config);
+            scattering(prtl, *config);
         }
     }
     if(changed)
         tally.setNPS(config->maxN);
-    tally.hist.scaling(1.0/config->maxN);
+    tally.scaling(1.0/config->maxN);
     emit spectrumChanged(tally);
     changed=false;
     tally.reset();

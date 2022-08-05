@@ -21,11 +21,11 @@ class Tally
 {
 private:
     Sphere detector;
+    Histogram hist;
     // true if using letharg bins
-    const bool letharg;
+    bool letharg;
     int NPS=0;
 public:
-    Histogram hist;
     /**
      * @brief Construct a new Tally object
      * 
@@ -34,7 +34,7 @@ public:
      * @param lower_ Lower energy limit
      * @param upper_ Upper energy limit
      */
-    Tally(const Sphere& s, const int nbins_, const double lower_, const double upper_)
+    Tally(const Sphere s, const int nbins_, const double lower_, const double upper_)
         : Tally(s, nbins_, lower_, upper_, false) {}
     Tally() : Tally(Sphere(QVector3D(0,0,0), 1),100,0,1) {}
     
@@ -47,7 +47,7 @@ public:
      * @param upper_ Upper energy limit
      * @param letharg_ Whether using lethargy bins
      */
-    Tally(const Sphere& s, const int nbins_, const double lower_, const double upper_, bool letharg_)
+    Tally(const Sphere s, const int nbins_, const double lower_, const double upper_, bool letharg_)
         : detector(s), letharg(letharg_) 
         {
             if(letharg)
@@ -96,6 +96,16 @@ public:
         else
             return hist.getBinCenter(binIdx);
     }
+    std::vector<double> getBinCenters() const
+    {
+        std::vector<double> tmp = hist.getBinCenters();
+        if (letharg) {
+            for(int i=0;i<tmp.size();i++)
+                tmp[i] = std::pow(10, tmp[i]);
+        }
+        return tmp;
+    }
+    std::vector<double> getBinContents() const {return hist.getBinContents();}
     double getBinContent(int binIdx) const {return hist.getBinContent(binIdx);}
     /**
      * @brief Get the lower energy limit of tally
@@ -150,11 +160,24 @@ public:
 
     int getNPS() const {return NPS;}
 
+    bool isLethargyBin() const {return letharg;}
+
     void setNPS(const int n) {NPS=n;}
     void setCenter(const QVector3D& newc) {detector.setCenter(newc);}
     void setRadius(const double newr) {detector.setRadius(newr);}
     void reset() {hist.clear();}
+    void scaling(const double f) {hist.scaling(f);}
 };
+
+/**
+ * @brief Update tally counts when the particle is forced to travel towards the detector
+ *
+ * @param particle Current photon
+ * @param config MC run settings
+ * @param tally Tally to be updated
+ * @return int
+ */
+int forceDetection(Particle& particle, const MCSettings& config, Tally& tally);
 
 /**
  * @brief Update tally counts contributed by a newly-created photon (primary contribution)
@@ -164,7 +187,7 @@ public:
  * @param tally Energy tally
  * @return int 
  */
-int primaryContribution(const Particle& particle, const MCSettings& config, Tally& tally);
+int primaryContributionPhoton(const Particle& particle, const MCSettings& config, Tally& tally);
 /**
  * @brief Update tally counts if a photon were scattered towards the detector
  * 
@@ -173,16 +196,7 @@ int primaryContribution(const Particle& particle, const MCSettings& config, Tall
  * @param tally Tally to be updated
  * @return int 
  */
-int scatterContribution(Particle particle, const MCSettings& config, Tally& tally);
-/**
- * @brief Update tally counts when the photon is forced to travel towards the detector
- * 
- * @param particle Current photon
- * @param config MC run settings
- * @param tally Tally to be updated
- * @return int 
- */
-int forceDetection(Particle& particle, const MCSettings& config, Tally& tally);
+int scatterContributionPhoton(Particle particle, const MCSettings& config, Tally& tally);
 
 /**
  * @brief Update tally counts when the neutron is forced to travel towards the detector
