@@ -132,7 +132,7 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
 {
     if (particle.ergE < 1)
     {
-        if (QRandomGenerator::global()->generateDouble() < 0.01)
+        if (GlobalUniformRandNumGenerator::GetInstance().generateDouble() < 0.01)
         {
             // to reduce computation time, we do cfd for 1e4 thermal neutrons, which corresponds to 1% thermal neutrons if nps is 1e6
             scatterContributionThermalNeutron(particle, config, tally);
@@ -168,7 +168,7 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
                         (ratio - 0.5 * (1-ratio*ratio) * std::log((1+ratio)/(1-ratio)));
 
     // iterate all nuclides that the neutron can interact with
-    const int nuclidesNum = config.cells[0].material.getNuclidesNumber();
+    const int nuclidesNum = config.cells[0].material.getNumberOfNuclides();
     std::vector<double> scatterNuclideProbs(nuclidesNum, 0);
     std::vector<double> unattenProbs(nuclidesNum, 0);
     std::vector<double> scores(nuclidesNum, 0);
@@ -179,7 +179,7 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
     double mu_cms(0);
     double pdf(0);
     double dmu_cm_over_du_lab(0);
-    for (auto &&comp : config.cells[0].material.getNuclides())
+    for (auto &&comp : config.cells[0].material.getNuclideComposition())
     {
         nuclideIdx ++;
         const Nuclide& nuclide = comp.second;
@@ -206,11 +206,21 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
             mu_cms = (cosAng * std::sqrt(A*A-1+cosAng*cosAng) - 1 + cosAng*cosAng) / A; 
             if(std::abs(mu_cms) > 1.0)
             {
-                // mu_cms = 1.0;
-                // throw std::runtime_error(std::string("Cannot find mu_cms for mu_lab = ") + std::to_string(cosAng));
-                std::cout << std::string("Cannot find mu_cms for mu_lab = ") + std::to_string(cosAng) << '\n';
-                continue;
+            //     // mu_cms = 1.0;
+            //     // throw std::runtime_error(std::string("Cannot find mu_cms for mu_lab = ") + std::to_string(cosAng));
+            //     std::cout << std::string("Cannot find mu_cms for mu_lab = ") + std::to_string(cosAng) << '\n';
+            //     continue;
+                if (mu_cms > 1 && mu_cms < 1.1)
+                    mu_cms = 1;
+                else if (mu_cms < -1 && mu_cms > -1.1)
+                    mu_cms = -1;
+                else {
+                    std::cout << std::string("Cannot find mu_cms for mu_lab = ") + std::to_string(cosAng) << '\n';
+                    continue;
+                }
             }
+            
+            
             // neutron energy in cms
             E_cms = std::pow(A/(A+1), 2);
             E_lab = (1+A*A+2*A*mu_cms) / std::pow(A+1, 2);
@@ -225,7 +235,7 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
         }
         // probability that neutron scatters by nuclide i 
         scatterNuclideProbs[nuclideIdx] = comp.first * 
-                nuclide.getNeutronCrossSection().getElasticMicroScopicCrossSectionAt(particle.ergE);
+                nuclide.getNeutronCrossSection().getElasticMicroscopicCrossSectionAt(particle.ergE);
         // energy of scattered neutron in lab system
         E_lab *= particle.ergE;
         E_labs[nuclideIdx] = E_lab;
@@ -295,7 +305,7 @@ int scatterContributionThermalNeutron(Particle particle, const MCSettings& confi
     double epsilon_squared(0);
     double E_lab(0);
     double dpEbin(0);
-    for (auto &&comp : config.cells[0].material.getNuclides())
+    for (auto &&comp : config.cells[0].material.getNuclideComposition())
     {
         const Nuclide& nuclide = comp.second;
         const double A = nuclide.getAtomicWeight();
@@ -303,7 +313,7 @@ int scatterContributionThermalNeutron(Particle particle, const MCSettings& confi
         double normalization_const = 2 / ((1+0.5/(a*a))*std::erf(a) + std::exp(-a*a) / (a*2)*M_2_SQRTPI);
         // probability that neutron scatters by nuclide i 
         double scatterProbNuclidei = comp.first * 
-                nuclide.getNeutronCrossSection().getElasticMicroScopicCrossSectionAt(particle.ergE);
+                nuclide.getNeutronCrossSection().getElasticMicroscopicCrossSectionAt(particle.ergE);
         // iterate over thermal erg bins
         for (int i = 0; i < thermalErgBins.size(); i++)
         {

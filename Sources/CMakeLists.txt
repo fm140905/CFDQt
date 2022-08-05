@@ -13,6 +13,3 @@ target_link_libraries(tracking PUBLIC cell)
 
 add_library(cfd cfd.cpp)
 target_link_libraries(cfd PUBLIC tracking)
-
-add_executable(main main.cpp)
-target_link_libraries(main PUBLIC cfd)

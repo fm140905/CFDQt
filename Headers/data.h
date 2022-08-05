@@ -5,7 +5,7 @@
  * @version 0.1
  * @date 2021-07-26
  * 
- * @copyright Copyright (c) 2021
+ * @author Ming Fang
  * 
  */
 #pragma once
@@ -20,6 +20,13 @@ class Histogram
 {
 public:
     Histogram() {}
+    /**
+     * @brief Construct a new Histogram object
+     * 
+     * @param nbins_ Number of equal-size bins
+     * @param lower_ Left edge of first bin 
+     * @param upper_ Right edge of last bin 
+     */
     Histogram(const int nbins_, const double lower_, const double upper_)
         : nbins(nbins_),
           lowerEdge(lower_),
@@ -43,7 +50,7 @@ public:
     // fill new data
     bool fill(const double item, const double weight=1);
 
-    // clear
+    // clear bin data
     void clear();
 
     // rebin

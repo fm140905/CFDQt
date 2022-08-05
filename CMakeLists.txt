@@ -7,9 +7,14 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Headers)
 
-find_package(Qt5 REQUIRED COMPONENTS Core Gui)
+find_package(Qt5 REQUIRED COMPONENTS Gui)
 
-find_package(OpenMP)
+# find_package(OpenMP)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose Release or Debug" FORCE)
+endif ()
+message(STATUS "Build type: '${CMAKE_BUILD_TYPE}'")
 
 option(ENABLE_UNIT_TESTS "Enable unit tests" ON)
 message(STATUS "Enable testing: ${ENABLE_UNIT_TESTS}")
@@ -30,5 +35,5 @@ if (ENABLE_UNIT_TESTS)
     add_subdirectory(Test)
 endif()
 
-enable_testing()
 add_subdirectory(Sources)
+add_subdirectory(Examples)

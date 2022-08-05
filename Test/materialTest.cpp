@@ -11,7 +11,7 @@ public:
     {
         // std::string rootdir = "/home/mingf2/projects/2021_DTRA/";
         // std::string rootdir = "/media/ming/DATA/projects/2021_DTRA/cfdneutron/";
-    std::string rootdir = getRootDir();
+        std::string rootdir = getRootDir();
         H1NeutronCrossSection = new NeutronCrossSection(rootdir+"DATA/H1-total-cross-section.txt",
                                                     rootdir+"DATA/H1-elastic-scattering-cross-section.txt");
         O16NeutronCrossSection = new NeutronCrossSection(rootdir+"DATA/O16-total-cross-section.txt",
@@ -28,11 +28,11 @@ public:
 
 TEST_F(NeutronCrossSectionTest, constructor)
 {
-    EXPECT_EQ(H1NeutronCrossSection->getTotalMicroScopicCrossSectionSize(), 384-6);
-    EXPECT_EQ(O16NeutronCrossSection->getTotalMicroScopicCrossSectionSize(), 2489-6);
+    EXPECT_EQ(H1NeutronCrossSection->getTotalMicroscopicCrossSectionSize(), 384-6);
+    EXPECT_EQ(O16NeutronCrossSection->getTotalMicroscopicCrossSectionSize(), 2489-6);
 
-    EXPECT_EQ(H1NeutronCrossSection->getElasticMicroScopicCrossSectionSize(), 203-8);
-    EXPECT_EQ(O16NeutronCrossSection->getElasticMicroScopicCrossSectionSize(), 2084-6);
+    EXPECT_EQ(H1NeutronCrossSection->getElasticMicroscopicCrossSectionSize(), 203-8);
+    EXPECT_EQ(O16NeutronCrossSection->getElasticMicroscopicCrossSectionSize(), 2084-6);
 
     EXPECT_EQ(H1NeutronCrossSection->getDAPDFSize().first, 1);
     EXPECT_EQ(H1NeutronCrossSection->getDAPDFSize().second, 101);
@@ -46,28 +46,28 @@ TEST_F(NeutronCrossSectionTest, constructor)
 }
 TEST_F(NeutronCrossSectionTest, getTotalCrossSection)
 {
-    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getTotalMicroScopicCrossSectionAt(1e-6), 1176.39);
-    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getTotalMicroScopicCrossSectionAt(2e7), 6.432651e-01);
-    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getTotalMicroScopicCrossSectionAt(1), 20.7451);
-    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getTotalMicroScopicCrossSectionAt(1e3), 20.3208);
+    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getTotalMicroscopicCrossSectionAt(1e-6), 1176.39);
+    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getTotalMicroscopicCrossSectionAt(2e7), 6.432651e-01);
+    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getTotalMicroscopicCrossSectionAt(1), 20.7451);
+    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getTotalMicroscopicCrossSectionAt(1e3), 20.3208);
 
-    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getTotalMicroScopicCrossSectionAt(1e-6), 54.1555);
-    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getTotalMicroScopicCrossSectionAt(2e7), 1.76586751);
-    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getTotalMicroScopicCrossSectionAt(1), 3.80075);
-    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getTotalMicroScopicCrossSectionAt(1e4), 3.77436);
+    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getTotalMicroscopicCrossSectionAt(1e-6), 54.1555);
+    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getTotalMicroscopicCrossSectionAt(2e7), 1.76586751);
+    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getTotalMicroscopicCrossSectionAt(1), 3.80075);
+    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getTotalMicroscopicCrossSectionAt(1e4), 3.77436);
 }
 
 TEST_F(NeutronCrossSectionTest, getElasticCrossSection)
 {
-    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getElasticMicroScopicCrossSectionAt(1e-6), 1159.66);
-    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getElasticMicroScopicCrossSectionAt(2e7), 6.432359e-01);
-    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getElasticMicroScopicCrossSectionAt(1), 20.6923);
-    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getElasticMicroScopicCrossSectionAt(1e3), 20.4366);
+    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getElasticMicroscopicCrossSectionAt(1e-6), 1159.66);
+    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getElasticMicroscopicCrossSectionAt(2e7), 6.432359e-01);
+    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getElasticMicroscopicCrossSectionAt(1), 20.6923);
+    EXPECT_DOUBLE_EQ(H1NeutronCrossSection->getElasticMicroscopicCrossSectionAt(1e3), 20.4366);
 
-    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getElasticMicroScopicCrossSectionAt(1e-6), 54.1469);
-    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getElasticMicroScopicCrossSectionAt(2e7), 1.043929);
-    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getElasticMicroScopicCrossSectionAt(1), 3.80376);
-    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getElasticMicroScopicCrossSectionAt(1e5), 3.547228);
+    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getElasticMicroscopicCrossSectionAt(1e-6), 54.1469);
+    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getElasticMicroscopicCrossSectionAt(2e7), 1.043929);
+    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getElasticMicroscopicCrossSectionAt(1), 3.80376);
+    EXPECT_DOUBLE_EQ(O16NeutronCrossSection->getElasticMicroscopicCrossSectionAt(1e5), 3.547228);
 }
 
 TEST_F(NeutronCrossSectionTest, getDAPDF)

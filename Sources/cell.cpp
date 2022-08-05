@@ -3,20 +3,20 @@
 Particle Source::createParticle() const
 {
     // uniform, [0. 1)
-    double a = QRandomGenerator::global()->generateDouble();
-    double b = QRandomGenerator::global()->generateDouble();
+    double a = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
+    double b = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
     if (b < a)
         std::swap(a, b);
     
     double initX = b * cylinder.getRadius() * qCos(2 * M_PI * a /b);
     double initY = b * cylinder.getRadius() * qSin(2 * M_PI * a /b);
-    double initZ = QRandomGenerator::global()->generateDouble() * cylinder.getHeight();
+    double initZ = GlobalUniformRandNumGenerator::GetInstance().generateDouble() * cylinder.getHeight();
     QVector3D initPos = QVector3D(initX, initY, initZ) + cylinder.getBaseCenter();
     // QVector3D initPos = cylinder.getBaseCenter();
     // initPos.setZ(10);
 
-    double phi= 2 * M_PI * QRandomGenerator::global()->generateDouble();
-    double costheta = 1 - 2 * QRandomGenerator::global()->generateDouble();
+    double phi= 2 * M_PI * GlobalUniformRandNumGenerator::GetInstance().generateDouble();
+    double costheta = 1 - 2 * GlobalUniformRandNumGenerator::GetInstance().generateDouble();
     double sintheta = qSqrt(1-costheta*costheta);
     QVector3D initDir = QVector3D(sintheta * qCos(phi), sintheta * qSin(phi), costheta);
 
@@ -28,7 +28,7 @@ Particle Source::createParticle() const
     }
     else
     {
-        a = QRandomGenerator::global()->generateDouble();
+        a = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
         double idx = std::floor(a / CDFBinWidth);
         // linear interpolation
         double xl = idx * CDFBinWidth;
@@ -42,7 +42,7 @@ Particle Source::createParticle() const
 
 void Particle::scatter(const double cosAng)
 {
-    double alpha = 2 * M_PI * QRandomGenerator::global()->generateDouble(); // angel phi
+    double alpha = 2 * M_PI * GlobalUniformRandNumGenerator::GetInstance().generateDouble(); // angel phi
     double R1 = dir.x();
     double R2 = dir.y();
     double R3 = dir.z();

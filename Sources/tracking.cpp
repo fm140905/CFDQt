@@ -6,7 +6,7 @@ bool deltaTracking(Particle& particle, const MCSettings& config)
     while (!particle.escaped)
     {
         // randomly select a distance
-        double randReal = QRandomGenerator::global()->generateDouble();
+        double randReal = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
         double distance = - std::log(randReal) / muMax; // cm
         particle.move(distance);
         if(!config.ROI.contain(particle.pos))
@@ -18,7 +18,7 @@ bool deltaTracking(Particle& particle, const MCSettings& config)
 
         // virtual collision
         // check if randReal < u(x,E) / u_max
-        randReal = QRandomGenerator::global()->generateDouble();
+        randReal = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
         // const Cell& currentCell = config.getCell(particle);
         const Cell& currentCell = config.cells[0];
         if (randReal * currentCell.material.getPhotonTotalAtten(particle.ergE) < muMax)
@@ -43,9 +43,9 @@ int ComptonScattering(Particle& particle, const MCSettings& config)
     double cosAng = 0;
     while (1)
     {
-        R1 = QRandomGenerator::global()->generateDouble();
-        R2 = QRandomGenerator::global()->generateDouble();
-        R3 = QRandomGenerator::global()->generateDouble();
+        R1 = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
+        R2 = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
+        R3 = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
         if((2*alpha+9)* R1 <= (2*alpha + 1))
         {
             eta = 1 + 2 * alpha * R2;
@@ -90,7 +90,7 @@ bool deltaTrackingNeutron(Particle& particle, const MCSettings& config)
     while (!particle.escaped)
     {
         // randomly select a distance
-        double randReal = QRandomGenerator::global()->generateDouble();
+        double randReal = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
         double distance = - std::log(randReal) / muMax; // cm
         particle.move(distance);
         if(!config.ROI.contain(particle.pos))
@@ -112,12 +112,12 @@ int neutronElasticScattering(Particle& particle, const MCSettings& config)
 {
     const Cell& currentCell = config.cells[0];
     // decide which nuclide the neutron will interacts with
-    double randReal = QRandomGenerator::global()->generateDouble();
+    double randReal = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
     const Nuclide& nuclide = currentCell.material.selectInteractionTarget(particle.ergE, randReal);
     double A = nuclide.getAtomicWeight();
     // update the wieght, w = w * P(interaction is Elastic scattering)
-    particle.weight *= nuclide.getNeutronCrossSection().getElasticMicroScopicCrossSectionAt(particle.ergE) 
-                        / nuclide.getNeutronCrossSection().getTotalMicroScopicCrossSectionAt(particle.ergE);
+    particle.weight *= nuclide.getNeutronCrossSection().getElasticMicroscopicCrossSectionAt(particle.ergE) 
+                        / nuclide.getNeutronCrossSection().getTotalMicroscopicCrossSectionAt(particle.ergE);
     double E_lab;
     double mu_lab;
     if (particle.ergE > 1) // threshold =  1eV
@@ -127,14 +127,14 @@ int neutronElasticScattering(Particle& particle, const MCSettings& config)
         if (std::abs(A-1) < 0.1)
         {
             // isotopic in CMS
-            double mu_cms = 2 * QRandomGenerator::global()->generateDouble() - 1; // -1 < mu_cms < 1
+            double mu_cms = 2 * GlobalUniformRandNumGenerator::GetInstance().generateDouble() - 1; // -1 < mu_cms < 1
             mu_lab = std::sqrt((1+mu_cms) / 2);
             E_lab = (1+mu_cms) / 2;
         }
         else
         {
             // sample a mu in CMS
-            double randReal = QRandomGenerator::global()->generateDouble();
+            double randReal = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
             double mu_cms = nuclide.getNeutronCrossSection().getDAInvCDFAt(particle.ergE, randReal);
             double E_cms = std::pow(A/(1+A), 2);
             // calculate the energy in lab system
@@ -173,22 +173,22 @@ int thermalNeutronElasticScatterSampling(const double A, const double E_0, doubl
     const double h = a * std::exp(-a*a);
     double p, q;
     static NormalRandNumGenerator normalRangGen(0, M_SQRT1_2);
-    if (QRandomGenerator::global()->generateDouble() * (g+h) > (g-h))
+    if (GlobalUniformRandNumGenerator::GetInstance().generateDouble() * (g+h) > (g-h))
     {
         // select q with Method Q1
-        q = std::sqrt(a*a-std::log(QRandomGenerator::global()->generateDouble()));
+        q = std::sqrt(a*a-std::log(GlobalUniformRandNumGenerator::GetInstance().generateDouble()));
         // select p with Method P1
         double z;
-        if (QRandomGenerator::global()->generateDouble() < a / q)
+        if (GlobalUniformRandNumGenerator::GetInstance().generateDouble() < a / q)
         {
             // yes
-            double R4 = QRandomGenerator::global()->generateDouble();
-            double R5 = QRandomGenerator::global()->generateDouble();
+            double R4 = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
+            double R5 = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
             z = std::max(R4, R5);
         }
         else
         {
-            z = QRandomGenerator::global()->generateDouble();
+            z = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
         }
         p = 2 * (2*z+q/a-1) / (lambda + 1);
         
@@ -200,11 +200,11 @@ int thermalNeutronElasticScatterSampling(const double A, const double E_0, doubl
         if (a < 0.71)
         {
             // yes
-            double R1 =  QRandomGenerator::global()->generateDouble();
-            double R2 =  QRandomGenerator::global()->generateDouble();
-            double R3 =  QRandomGenerator::global()->generateDouble();
+            double R1 =  GlobalUniformRandNumGenerator::GetInstance().generateDouble();
+            double R2 =  GlobalUniformRandNumGenerator::GetInstance().generateDouble();
+            double R3 =  GlobalUniformRandNumGenerator::GetInstance().generateDouble();
             double x = std::max(std::max(R1, R2), R3);
-            if (QRandomGenerator::global()->generateDouble() < std::exp(-std::pow(a*(2*x-1), 2.0)))
+            if (GlobalUniformRandNumGenerator::GetInstance().generateDouble() < std::exp(-std::pow(a*(2*x-1), 2.0)))
             {
                 flag = true;
                 q = a * (2 * x - 1);
@@ -213,9 +213,9 @@ int thermalNeutronElasticScatterSampling(const double A, const double E_0, doubl
         while(!flag)
         {
             // sample from a normal distribution with mean = 0, stddev = 1/sqrt(2)
-            double R = normalRangGen.genRandNumber();
+            double R = normalRangGen.generateDouble();
             if (std::abs(R) < a && 
-                QRandomGenerator::global()->generateDouble() <= std::pow((R+a)/(2*a), 2))
+                GlobalUniformRandNumGenerator::GetInstance().generateDouble() <= std::pow((R+a)/(2*a), 2))
             {
                 // yes
                 flag = true;
@@ -223,8 +223,8 @@ int thermalNeutronElasticScatterSampling(const double A, const double E_0, doubl
             }
         }
         // select p with Method P2
-        double R4 = QRandomGenerator::global()->generateDouble();
-        double R5 = QRandomGenerator::global()->generateDouble();
+        double R4 = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
+        double R5 = GlobalUniformRandNumGenerator::GetInstance().generateDouble();
         double z = std::max(R4, R5);
         p = 2*z*(q+a) / (a*(lambda+1));
     }

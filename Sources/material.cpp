@@ -123,11 +123,11 @@ bool NeutronCrossSection::loadDAInverseCDFFile(std::string DAInverseCDFFile)
     }
 }
 
-double NeutronCrossSection::getTotalMicroScopicCrossSectionAt(double energy) const
+double NeutronCrossSection::getTotalMicroscopicCrossSectionAt(double energy) const
 {
     return getClosestEntry(energy, totalMicroscopicCrossSection);
 }
-double NeutronCrossSection::getElasticMicroScopicCrossSectionAt(double energy) const
+double NeutronCrossSection::getElasticMicroscopicCrossSectionAt(double energy) const
 {
     return getClosestEntry(energy, elasticMicroscopicCrossSection);
 }
@@ -240,15 +240,15 @@ Material::Material(const double d, const int id, const std::vector<std::pair<dou
     {
         const auto& v = compositions[i];
         molecularMass += v.first * v.second.getAtomicWeight();
-        if (neutronGridNum < v.second.getNeutronCrossSection().getTotalMicroScopicCrossSectionSize())
+        if (neutronGridNum < v.second.getNeutronCrossSection().getTotalMicroscopicCrossSectionSize())
         {
-            neutronGridNum = v.second.getNeutronCrossSection().getTotalMicroScopicCrossSectionSize();
+            neutronGridNum = v.second.getNeutronCrossSection().getTotalMicroscopicCrossSectionSize();
             densestNeutronIdx = i;
         }
         // photon cross sections have the same size
     }
     std::vector<double> neutronErgGrid;
-    for (auto &&v : compositions[densestNeutronIdx].second.getNeutronCrossSection().getTotalMicroScopicCrossSection())
+    for (auto &&v : compositions[densestNeutronIdx].second.getNeutronCrossSection().getTotalMicroscopicCrossSection())
     {
         neutronErgGrid.push_back(v.first);
     }
@@ -259,7 +259,7 @@ Material::Material(const double d, const int id, const std::vector<std::pair<dou
         std::vector<double> invCDF{0};
         for (auto &&v : compositions)
         {
-            weightCrossSection += v.first * v.second.getNeutronCrossSection().getTotalMicroScopicCrossSectionAt(energy);
+            weightCrossSection += v.first * v.second.getNeutronCrossSection().getTotalMicroscopicCrossSectionAt(energy);
             invCDF.push_back(weightCrossSection);
         }
         for (int i=0;i<invCDF.size();i++)
