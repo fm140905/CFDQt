@@ -1,24 +1,21 @@
-# Demonstration of CFD in a Simple Geometry
+# Simple GUI application for demonstrating real-time radiation flux calculation using CFD
+User can move the detector using sliders. A gamma spectrum at current detector position is calculated using CFD and rendered on the screen in real-time.
 
 ## Prerequisites
-- Install qt5 development packages
-```bash
-sudo apt-get install qt5-default
-```
-- python for plotting
+- Qt 5.13 or higher
+- OpenGL 3.0 or higher
 
 ## Build
   ```bash
   mkdir -p build
   cd build
-  cmake ..
-  cmake --build .
+  qmake -config release ../gui.pro
+  make
   ```
-## Run Examples
+## Run
 ```bash
-cd ../Examples
-# run the gamma simulation, ~ 10 s
-./runGamma.sh
-# run the neutron simulation, ~ 10 s
-./runNeutron.sh 
+    cd ..
+    build/cfdqt/CFDQt
 ```
+## Demo
+<img src="Demo/demo.gif" width="800" height="400" />
