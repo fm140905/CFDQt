@@ -11,6 +11,7 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <cassert>
+#include <filesystem>
 
 #include "geometry.h"
 #include "data.h"
@@ -48,7 +49,7 @@ int main(int argc, char** argv)
     std::vector<double> srcEnergyCDF{0, 478702, 817756, 1.15082e6,
                                     1.50133e6,1.88769e6,2.33337e6,2.87784e6,
                                     3.60501e6,4.77086e6,1e7}; // Cf-252
-    const Source source = Source(sourceCylinder, srcEnergyCDF);
+    const Source source = Source(sourceCylinder, srcEnergyCDF, Particle::Neutron);
     // initialize settings
     const int maxN = 1000000;
     const double maxScatterN = 100;
@@ -73,17 +74,17 @@ int main(int argc, char** argv)
         assert(config.ROI.contain(prtl.pos));
 
         // primary contribution
-        forceDetectionNeutron(prtl, config, tally);
+        forceDetection(prtl, config, tally);
 
         // transport
         while (prtl.scatterN < config.maxScatterN &&
                prtl.ergE > config.minE &&
                prtl.weight > config.minW &&
-               deltaTrackingNeutron(prtl, config))
+               deltaTracking(prtl, config))
         {
             prtl.scatterN += 1;
-            forceDetectionNeutron(prtl, config, tally);
-            neutronElasticScattering(prtl, config);
+            forceDetection(prtl, config, tally);
+            scattering(prtl, config);
         }
     }
 

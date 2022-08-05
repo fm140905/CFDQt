@@ -1,7 +1,18 @@
 #include <gtest/gtest.h>
+#include <filesystem>
 #include "data.h"
 #include "material.h"
-
+std::string getRootDir()
+{
+    std::string cwd = std::filesystem::current_path();
+    std::size_t found = cwd.rfind("/build");
+    if (found!=std::string::npos)
+        cwd.replace (found, std::string::npos,"/");
+    else
+        throw std::runtime_error("Projetc root directory not found.");
+    // std::cout << cwd << std::endl;
+    return cwd;
+}
 class NeutronCrossSectionTest : public ::testing::Test
 {
 public:

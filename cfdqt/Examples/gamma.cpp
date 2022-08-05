@@ -11,6 +11,7 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <cassert>
+#include <filesystem>
 
 #include "geometry.h"
 #include "data.h"
@@ -46,7 +47,7 @@ int main(int argc, char** argv)
     const Cell waterCell = Cell(water, waterDensity, waterCylinder);
     // initialize source, eV for neutron, MeV for gamma
     std::vector<double> srcEnergyCDF{0.661}; // Cs137
-    const Source source = Source(sourceCylinder, srcEnergyCDF);
+    const Source source = Source(sourceCylinder, srcEnergyCDF, Particle::Photon);
     // initialize settings
     const int maxN = 10000000;
     const double maxScatterN = 5;
@@ -76,7 +77,7 @@ int main(int argc, char** argv)
         {
             prtl.scatterN += 1;
             forceDetection(prtl, config, tally);
-            ComptonScattering(prtl, config);
+            scattering(prtl, config);
         }
     }
 

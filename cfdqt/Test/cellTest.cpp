@@ -1,12 +1,24 @@
 #include <gtest/gtest.h>
+#include <filesystem>
 #include "cell.h"
+std::string getRootDir()
+{
+    std::string cwd = std::filesystem::current_path();
+    std::size_t found = cwd.rfind("/build");
+    if (found!=std::string::npos)
+        cwd.replace (found, std::string::npos,"/");
+    else
+        throw std::runtime_error("Projetc root directory not found.");
+    // std::cout << cwd << std::endl;
+    return cwd;
+}
 
 TEST(ParticleTest, constructor)
 {
     const QVector3D p = QVector3D(0, 0, 0);
     const QVector3D d = QVector3D(1, 1, 1);
     double initE = 0.6617;
-    Particle prtl = Particle(p, d, initE, 1.0);
+    Particle prtl = Particle(p, d, initE, 1.0, Particle::Photon);
 
     EXPECT_DOUBLE_EQ(prtl.ergE, initE);
     EXPECT_DOUBLE_EQ(prtl.weight, 1.0);
@@ -48,10 +60,10 @@ TEST(CellTest, contain)
     // initialize cell
     const Cell waterCell = Cell(water, waterDensity, waterCylinder);
 
-    Particle prtl = Particle(QVector3D(10, 10, 20), QVector3D(1, 1, 1), 0.6617, 1.0);
+    Particle prtl = Particle(QVector3D(10, 10, 20), QVector3D(1, 1, 1), 0.6617, 1.0, Particle::Photon);
     EXPECT_TRUE(waterCell.contains(prtl));
 
-    prtl = Particle(QVector3D(0, 0, 20), QVector3D(1, 1, 1), 0.6617, 1.0);
+    prtl = Particle(QVector3D(0, 0, 20), QVector3D(1, 1, 1), 0.6617, 1.0, Particle::Photon);
     EXPECT_FALSE(waterCell.contains(prtl));
 }
 
@@ -60,7 +72,7 @@ TEST(SourceTest, createMonoenergeticParticle)
     // initialize source
     std::vector<double> srcEnergyCDF{0.661}; // eV for neutron, MeV for gamma
     const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
-    const Source source = Source(sourceCylinder, srcEnergyCDF);
+    const Source source = Source(sourceCylinder, srcEnergyCDF, Particle::Photon);
 
     Particle prtl = source.createParticle();
     EXPECT_DOUBLE_EQ(prtl.ergE, 0.661);
@@ -75,7 +87,7 @@ TEST(SourceTest, createDistributedParticle)
                                     1.50133,1.88769,2.33337,2.87784,
                                     3.60501,4.77086,10.0}; // eV for neutron, MeV for gamma
     const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
-    const Source source = Source(sourceCylinder, srcEnergyCDF);
+    const Source source = Source(sourceCylinder, srcEnergyCDF, Particle::Photon);
 
     std::ofstream fileptr;
     std::string fpath = "energy_list.txt";

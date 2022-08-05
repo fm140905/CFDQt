@@ -17,5 +17,11 @@
     </qresource>
     <qresource prefix="/DATA">
         <file>DATA/H2O.csv</file>
+        <file>DATA/H1-total-cross-section.txt</file>
+        <file>DATA/H1-elastic-scattering-cross-section.txt</file>
+        <file>DATA/O16-total-cross-section.txt</file>
+        <file>DATA/O16-elastic-scattering-cross-section.txt</file>
+        <file>DATA/O16-elastic-scattering-PDF.txt</file>
+        <file>DATA/O16-elastic-scattering-CDF.txt</file>
     </qresource>
 </RCC>
