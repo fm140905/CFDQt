@@ -5,10 +5,11 @@ echo "Run gamma CFD with 1E7 NPS..."
 echo "CFD done."
 tallyFile="output_gamma/tally.txt"
 if [ -f $tallyFile ]; then
-    cd output_gamma
     echo "The CFD result should be similar to the MCNP one."
-    python compare.py
-    cd ..
+    # cd output_gamma
+    # python compare.py
+    # cd ..
+    ./compare gamma
     echo "Test done."
 else
     echo "Test failed."

@@ -1,5 +1,5 @@
 add_executable(vector3Dtest vector3Dtest.cpp)
-target_link_libraries(vector3Dtest PUBLIC Qt5::Gui gtest_main)
+target_link_libraries(vector3Dtest PUBLIC geometry gtest_main)
 # set_target_properties(vector3Dtest PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 add_test(
     NAME vector3Dtest

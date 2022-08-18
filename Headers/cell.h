@@ -29,7 +29,7 @@ public:
      * @param n initial number of scatterings
      * @param b whether particle is outside of ROI
      */
-    Particle(const QVector3D& p, const QVector3D& d, const double erg, const double w, const int n, const bool b)
+    Particle(const Vector3D& p, const Vector3D& d, const double erg, const double w, const int n, const bool b)
         : pos(p), dir(d.normalized()), ergE(erg), weight(w), scatterN(n), escaped(b) 
     {
         initpos = pos;
@@ -42,14 +42,14 @@ public:
      * @param erg initial energy. eV for gamma, MeV for neutron
      * @param w initial weight
      */
-    Particle(const QVector3D& p, const QVector3D& d, const double erg, const double w)
+    Particle(const Vector3D& p, const Vector3D& d, const double erg, const double w)
         : Particle(p, d, erg, w, 0, false) {}
     // initial position
-    QVector3D initpos; // for debugging
+    Vector3D initpos; // for debugging
     // current position
-    QVector3D pos;
+    Vector3D pos;
     // current moving direction, unit vector
-    QVector3D dir;
+    Vector3D dir;
     // whether particle is outside of ROI
     bool escaped=false;
     // current particle weight

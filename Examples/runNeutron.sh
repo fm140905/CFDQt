@@ -5,10 +5,11 @@ echo "Run neutron CFD with 1E6 NPS..."
 echo "CFD done."
 tallyFile="output_neutron/tally.txt"
 if [ -f $tallyFile ]; then
-    cd output_neutron
     echo "The CFD result should be similar to the MCNP one."
-    python compare.py
-    cd ..
+    # cd output_neutron
+    # python compare.py
+    # cd ..
+    ./compare neutron
     echo "Test done."
 else
     echo "Test failed."

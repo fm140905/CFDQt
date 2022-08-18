@@ -3,8 +3,8 @@
 
 TEST(ParticleTest, constructor)
 {
-    const QVector3D p = QVector3D(0, 0, 0);
-    const QVector3D d = QVector3D(1, 1, 1);
+    const Vector3D p = Vector3D(0, 0, 0);
+    const Vector3D d = Vector3D(1, 1, 1);
     double initE = 0.6617;
     Particle prtl = Particle(p, d, initE, 1.0);
 
@@ -12,12 +12,12 @@ TEST(ParticleTest, constructor)
     EXPECT_DOUBLE_EQ(prtl.weight, 1.0);
     EXPECT_EQ(prtl.scatterN, 0);
     EXPECT_FALSE(prtl.escaped);
-    EXPECT_EQ(prtl.pos, QVector3D(0, 0, 0));
-    EXPECT_NEAR(prtl.dir.x(), 1/qSqrt(3), 1e-5);
-    EXPECT_NEAR(prtl.dir.y(), 1/qSqrt(3), 1e-5);
-    EXPECT_NEAR(prtl.dir.z(), 1/qSqrt(3), 1e-5);
+    EXPECT_EQ(prtl.pos, Vector3D(0, 0, 0));
+    EXPECT_NEAR(prtl.dir.x(), 1/std::sqrt(3), 1e-5);
+    EXPECT_NEAR(prtl.dir.y(), 1/std::sqrt(3), 1e-5);
+    EXPECT_NEAR(prtl.dir.z(), 1/std::sqrt(3), 1e-5);
 
-    prtl.move(qSqrt(3));
+    prtl.move(std::sqrt(3));
     EXPECT_NEAR(prtl.pos.x(), 1, 1e-5);
     EXPECT_NEAR(prtl.pos.y(), 1, 1e-5);
     EXPECT_NEAR(prtl.pos.z(), 1, 1e-5);
@@ -29,8 +29,8 @@ TEST(CellTest, contain)
     // std::string rootdir = "/media/ming/DATA/projects/2021_DTRA/cfdneutron/";
     std::string rootdir = getRootDir();
     // initialize gemoetry
-    const Cylinder waterCylinder = Cylinder(QVector3D(25, 25, 0), 52, 21.5);
-    const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
+    const Cylinder waterCylinder = Cylinder(Vector3D(25, 25, 0), 52, 21.5);
+    const Cylinder sourceCylinder = Cylinder(Vector3D(25, 25, 8.4478), 5.63372, 1.4097);
     // load cross-section tables
     const PhotonCrossSection photonCrossSection(rootdir+"DATA/H2O.csv");
     const NeutronCrossSection H1NeutronCrossSection(rootdir+"DATA/H1-total-cross-section.txt",
@@ -48,10 +48,10 @@ TEST(CellTest, contain)
     // initialize cell
     const Cell waterCell = Cell(water, waterDensity, waterCylinder);
 
-    Particle prtl = Particle(QVector3D(10, 10, 20), QVector3D(1, 1, 1), 0.6617, 1.0);
+    Particle prtl = Particle(Vector3D(10, 10, 20), Vector3D(1, 1, 1), 0.6617, 1.0);
     EXPECT_TRUE(waterCell.contains(prtl));
 
-    prtl = Particle(QVector3D(0, 0, 20), QVector3D(1, 1, 1), 0.6617, 1.0);
+    prtl = Particle(Vector3D(0, 0, 20), Vector3D(1, 1, 1), 0.6617, 1.0);
     EXPECT_FALSE(waterCell.contains(prtl));
 }
 
@@ -59,7 +59,7 @@ TEST(SourceTest, createMonoenergeticParticle)
 {
     // initialize source
     std::vector<double> srcEnergyCDF{0.661}; // eV for neutron, MeV for gamma
-    const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
+    const Cylinder sourceCylinder = Cylinder(Vector3D(25, 25, 8.4478), 5.63372, 1.4097);
     const Source source = Source(sourceCylinder, srcEnergyCDF);
 
     Particle prtl = source.createParticle();
@@ -74,7 +74,7 @@ TEST(SourceTest, createDistributedParticle)
     std::vector<double> srcEnergyCDF{0, 0.478702, 0.817756, 1.15082,
                                     1.50133,1.88769,2.33337,2.87784,
                                     3.60501,4.77086,10.0}; // eV for neutron, MeV for gamma
-    const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
+    const Cylinder sourceCylinder = Cylinder(Vector3D(25, 25, 8.4478), 5.63372, 1.4097);
     const Source source = Source(sourceCylinder, srcEnergyCDF);
 
     std::ofstream fileptr;

@@ -82,7 +82,7 @@ public:
         return detector.intersection(ray);
     }
 
-    QVector3D getCenter() const 
+    Vector3D getCenter() const 
     {
         return detector.getCenter();
     }

@@ -8,17 +8,17 @@ Particle Source::createParticle() const
     if (b < a)
         std::swap(a, b);
     
-    double initX = b * cylinder.getRadius() * qCos(2 * M_PI * a /b);
-    double initY = b * cylinder.getRadius() * qSin(2 * M_PI * a /b);
+    double initX = b * cylinder.getRadius() * std::cos(2 * M_PI * a /b);
+    double initY = b * cylinder.getRadius() * std::sin(2 * M_PI * a /b);
     double initZ = GlobalUniformRandNumGenerator::GetInstance().generateDouble() * cylinder.getHeight();
-    QVector3D initPos = QVector3D(initX, initY, initZ) + cylinder.getBaseCenter();
-    // QVector3D initPos = cylinder.getBaseCenter();
+    Vector3D initPos = Vector3D(initX, initY, initZ) + cylinder.getBaseCenter();
+    // Vector3D initPos = cylinder.getBaseCenter();
     // initPos.setZ(10);
 
     double phi= 2 * M_PI * GlobalUniformRandNumGenerator::GetInstance().generateDouble();
     double costheta = 1 - 2 * GlobalUniformRandNumGenerator::GetInstance().generateDouble();
-    double sintheta = qSqrt(1-costheta*costheta);
-    QVector3D initDir = QVector3D(sintheta * qCos(phi), sintheta * qSin(phi), costheta);
+    double sintheta = std::sqrt(1-costheta*costheta);
+    Vector3D initDir = Vector3D(sintheta * std::cos(phi), sintheta * std::sin(phi), costheta);
 
     double initE = 0;
     // monoenergetic

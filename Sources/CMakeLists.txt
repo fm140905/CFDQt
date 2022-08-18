@@ -1,5 +1,5 @@
 add_library(geometry geometry.cpp)
-target_link_libraries(geometry PUBLIC Qt5::Gui)
+# target_link_libraries(geometry PUBLIC Qt5::Gui)
 
 add_library(data data.cpp)
 

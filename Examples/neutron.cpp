@@ -26,8 +26,8 @@ int main(int argc, char** argv)
     std::filesystem::path cwd(std::filesystem::current_path());
     std::string rootdir = cwd.parent_path().string();
     // initialize gemoetry
-    const Cylinder waterCylinder = Cylinder(QVector3D(25, 25, 0), 52, 5);
-    const Cylinder sourceCylinder = Cylinder(QVector3D(25, 25, 8.4478), 5.63372, 1.4097);
+    const Cylinder waterCylinder = Cylinder(Vector3D(25, 25, 0), 52, 5);
+    const Cylinder sourceCylinder = Cylinder(Vector3D(25, 25, 8.4478), 5.63372, 1.4097);
     // load cross-section tables
     const PhotonCrossSection photonCrossSection(rootdir+"/DATA/H2O.csv");
     const NeutronCrossSection H1NeutronCrossSection(rootdir+"/DATA/H1-total-cross-section.txt",
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     const double minW = 0.01;
     const MCSettings config = MCSettings(waterCylinder, std::vector<Cell>{waterCell}, source, maxN, maxScatterN, minW, minE);
     // initialize tally F2
-    const Sphere detector = Sphere(QVector3D(75, 75, 10), 2.54);
+    const Sphere detector = Sphere(Vector3D(75, 75, 10), 2.54);
     // lethargy
     Tally tally = Tally(detector, 110, 1e-3, 1e8, true);
 

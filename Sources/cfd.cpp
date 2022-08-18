@@ -16,8 +16,8 @@ int forceDetection(Particle& particle, const MCSettings& config, Tally& tally)
 
 int primaryContribution(const Particle& particle, const MCSettings& config, Tally& tally)
 {
-    QVector3D prtl2det = tally.getCenter() - particle.pos;
-    double proj = QVector3D::dotProduct(prtl2det, particle.dir);
+    Vector3D prtl2det = tally.getCenter() - particle.pos;
+    double proj = Vector3D::dotProduct(prtl2det, particle.dir);
     if(proj <= 0)
         return 0;
     
@@ -46,10 +46,10 @@ int scatterContribution(Particle particle, const MCSettings& config, Tally& tall
 {
     // determine the scattering angle if the particle
     // were scattered towards the detector
-    QVector3D prtl2det = tally.getCenter() - particle.pos;
+    Vector3D prtl2det = tally.getCenter() - particle.pos;
     double length = prtl2det.length();
     prtl2det.normalize();
-    double cosAng = QVector3D::dotProduct(particle.dir, prtl2det);
+    double cosAng = Vector3D::dotProduct(particle.dir, prtl2det);
 
     // new energy / pre energy
     double beta = 1 / (1+particle.ergE / 0.511 * (1-cosAng));
@@ -102,8 +102,8 @@ int forceDetectionNeutron(Particle& particle, const MCSettings& config, Tally& t
 
 int primaryContributionNeutron(const Particle& particle, const MCSettings& config, Tally& tally)
 {
-    QVector3D prtl2det = tally.getCenter() - particle.pos;
-    double proj = QVector3D::dotProduct(prtl2det, particle.dir);
+    Vector3D prtl2det = tally.getCenter() - particle.pos;
+    double proj = Vector3D::dotProduct(prtl2det, particle.dir);
     if(proj <= 0)
         return 0;
     
@@ -143,10 +143,10 @@ int scatterContributionNeutron(Particle particle, const MCSettings& config, Tall
         
     // determine the scattering angle if the particle
     // were scattered towards the detector
-    QVector3D prtl2det = tally.getCenter() - particle.pos;
+    Vector3D prtl2det = tally.getCenter() - particle.pos;
     const double length = prtl2det.length();
     prtl2det.normalize();
-    const double cosAng = QVector3D::dotProduct(particle.dir, prtl2det); // mu_lab
+    const double cosAng = Vector3D::dotProduct(particle.dir, prtl2det); // mu_lab
     
     // attenuation along the ray
     Ray ray = Ray(particle.pos, prtl2det);
@@ -260,10 +260,10 @@ int scatterContributionThermalNeutron(Particle particle, const MCSettings& confi
 {
     // determine the scattering angle if the particle
     // were scattered towards the detector
-    QVector3D prtl2det = tally.getCenter() - particle.pos;
+    Vector3D prtl2det = tally.getCenter() - particle.pos;
     const double length = prtl2det.length();
     prtl2det.normalize();
-    const double cosAng = QVector3D::dotProduct(particle.dir, prtl2det); // mu_lab
+    const double cosAng = Vector3D::dotProduct(particle.dir, prtl2det); // mu_lab
     
     // attenuation along the ray
     Ray ray = Ray(particle.pos, prtl2det);
