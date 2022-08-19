@@ -3,7 +3,9 @@
 // #include <QtMath>
 #include <iostream>
 #include "geometry.h"
-
+#ifndef M_SQRT2
+    #define M_SQRT2 1.41421356237309504880
+#endif
 TEST(Vector3D, point2LineDist)
 {
     Vector3D point(10, 10, 10);

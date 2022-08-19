@@ -1,10 +1,3 @@
-<!--
- * @Description: 
- * @Author: Ming Fang
- * @Date: 1969-12-31 18:00:00
- * @LastEditors: Ming Fang
- * @LastEditTime: 2022-08-18 19:14:32
--->
 # Demonstration of CFD in a Simple Geometry
 
 ## Prerequisites
@@ -16,19 +9,29 @@
     ```bash
     sudo apt install gnuplot
     ```
+  - Windows + MSVC:
+    Download Gnuplot from [www.gnuplot.info](http://www.gnuplot.info) and install it. Make sure you mark the option "Add application directory to your PATH environment variable"
+
 
 ## Build
   ```bash
   mkdir -p build
   cd build
   cmake ..
-  cmake --build .
+  cmake --build . --config Release
   ```
 ## Run Examples
-```bash
-cd ../Examples
-# run the gamma simulation, ~ 10 s
-./runGamma.sh
-# run the neutron simulation, ~ 10 s
-./runNeutron.sh 
-```
+- Ubuntu + gcc:
+  ```bash
+  cd ../Examples
+  # run the gamma simulation
+  ./run.sh gamma
+  # run the neutron simulation
+  ./run.sh neutron 
+  ```
+- Windows + MSVC: Run the following in `cmd`
+  ```cmd
+  cd ..\Examples\
+  run.bat gamma
+  run.bat neutron 
+  ```

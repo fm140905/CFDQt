@@ -13,7 +13,12 @@
 
 #include <iostream>
 #include "cell.h"
-
+#ifndef M_2_SQRTPI
+	#define M_2_SQRTPI 1.12837916709551257390
+#endif
+#ifndef M_SQRT1_2
+#define M_SQRT1_2 0.707106781186547524401
+#endif
 /**
  * @brief Perform delta tracking of a photon. Photon travels along the current direction, 
  *        and its position and weight are updated, 
