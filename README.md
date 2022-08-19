@@ -3,7 +3,7 @@
  * @Author: Ming Fang
  * @Date: 1969-12-31 18:00:00
  * @LastEditors: Ming Fang
- * @LastEditTime: 2022-08-18 18:10:26
+ * @LastEditTime: 2022-08-18 19:14:32
 -->
 # Demonstration of CFD in a Simple Geometry
 
@@ -16,11 +16,6 @@
     ```bash
     sudo apt install gnuplot
     ```
-  - MacOS + Clang:
-    ```bash
-    sudo brew install gnuplot
-    ```
-  - Windows + MSVC. Download Gnuplot from [www.gnuplot.info](http://www.gnuplot.info) and install it. If you're using the Gnuplot installer, make sure you mark the option "Add application directory to your PATH environment variable"
 
 ## Build
   ```bash
