@@ -76,7 +76,8 @@ void Histogram::rebin(const int nbins_, const double lower_, const double upper_
 
 std::string getRootDir()
 {
-    std::string cwd = std::filesystem::current_path();
+    std::string cwd(std::filesystem::current_path().u8string());
+    // std::cout << cwd << '\n';
     std::size_t found = cwd.rfind("/build");
     if (found!=std::string::npos)
         cwd.replace (found, std::string::npos,"/");
