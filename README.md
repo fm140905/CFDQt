@@ -15,7 +15,7 @@
 
 ## Build
   ```bash
-  mkdir -p build
+  mkdir build
   cd build
   cmake ..
   cmake --build . --config Release
@@ -29,9 +29,9 @@
   # run the neutron simulation
   ./run.sh neutron 
   ```
-- Windows + MSVC: Run the following in `cmd`
+- Windows + MSVC:
   ```cmd
-  cd ..\Examples\
+  cd ../Examples
   run.bat gamma
   run.bat neutron 
   ```
